@@ -1,0 +1,42 @@
+Guest:
+  - view public posts and events
+  - view clubs profile
+
+Admin:
+  - give a User the Student role
+  - kick out users
+  - view statistics
+  - change the clubs responsible
+
+User:
+  - view public posts and events
+  - comment on PUBLIC posts and events
+  
+Student:
+  - view public and studentsOnly posts and events
+  - request to join clubs
+  - book PUBLIC and STUDENTS_ONLY events
+  - comment on PUBLIC and STUDENTS_ONLY posts and events
+
+ClubsResponsible:
+  note: he himself can not be a clubPresident or an assistantMember in any club
+  - create clubs and assign the clubPresident
+  - change the clubPresident of any club
+  - view all posts and events
+  - book PUBLIC and STUDENTS_ONLY events
+  - manage reservation calendar 
+  - hide posts and events
+
+ClubPresident:
+  - create and manage the club posts and events
+  - assign assistant members
+  - accept new members
+  - customize assistant members authorities
+  - ban out members
+  - view members history
+  - comment on PUBLIC, STUDENTS_ONLY and PRIVATE posts and events
+
+ClubMember:
+  - view PUBLIC, STUDENTS_ONLY and PRIVATE posts and events  
+  - comment on PUBLIC, STUDENTS_ONLY and PRIVATE posts and events
+  - book an event

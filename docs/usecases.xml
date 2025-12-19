@@ -1,0 +1,253 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0" version="29.2.7">
+  <diagram name="Page-1" id="67_uSes2lcNYQKUmgSt8">
+    <mxGraphModel dx="1628" dy="2216" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="swimlane;startSize=30;" value="Club Management System" vertex="1">
+          <mxGeometry height="1750" width="600" x="250" y="-280" as="geometry" />
+        </mxCell>
+        <mxCell id="uc1" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="View Public Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="uc2" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Comment on Public Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="uc3" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="View STUDENT_ONLY Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="uc4" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Comment on&amp;nbsp;STUDENT_ONLY&amp;nbsp;Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="uc5" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="request to join Clubs" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="uc6" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Create Clubs" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="uc7" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Club President" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="uc8" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Change Club President" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="uc9" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="View All Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="uc10" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Create Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="1120" as="geometry" />
+        </mxCell>
+        <mxCell id="uc11" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Manage Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="250" y="1190" as="geometry" />
+        </mxCell>
+        <mxCell id="uc12" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Assign Assistant Members" vertex="1">
+          <mxGeometry height="60" width="140" x="250" y="1270" as="geometry" />
+        </mxCell>
+        <mxCell id="uc13" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Accept New Members" vertex="1">
+          <mxGeometry height="60" width="140" x="250" y="1350" as="geometry" />
+        </mxCell>
+        <mxCell id="uc14" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Kick Out Members" vertex="1">
+          <mxGeometry height="60" width="140" x="250" y="1430" as="geometry" />
+        </mxCell>
+        <mxCell id="uc15" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="Comment on Private Posts and Events" vertex="1">
+          <mxGeometry height="70" width="140" x="250" y="1570" as="geometry" />
+        </mxCell>
+        <mxCell id="uc16" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="View Private Posts and Events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="1650" as="geometry" />
+        </mxCell>
+        <mxCell id="uNCgmgs6ma84t48twlrE-6" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="give temporary authorities to assistant members" vertex="1">
+          <mxGeometry height="60" width="140" x="250" y="1500" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-2" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="give a User the Student role" vertex="1">
+          <mxGeometry height="60" width="140" x="160" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-3" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="kick out users" vertex="1">
+          <mxGeometry height="60" width="140" x="160" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-4" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="view statistics" vertex="1">
+          <mxGeometry height="60" width="140" x="160" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-7" edge="1" parent="system" source="rC8RQ_Xzs2TtSy2UCyTL-1" style="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-200" y="229.70999999999998" as="sourcePoint" />
+            <mxPoint x="160" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-9" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="change the clubs responsible" vertex="1">
+          <mxGeometry height="60" width="140" x="160" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-11" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="book STUDENT_ONLY events" vertex="1">
+          <mxGeometry height="60" width="140" x="80" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-13" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="book PUBLIC events" vertex="1">
+          <mxGeometry height="60" width="140" x="240" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-17" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="manage reservation calendar" vertex="1">
+          <mxGeometry height="60" width="140" x="410" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-16" parent="system" style="ellipse;whiteSpace=wrap;html=1;" value="delete posts and events" vertex="1">
+          <mxGeometry height="60" width="140" x="410" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="User" vertex="1">
+          <mxGeometry height="80" width="40" x="80" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="student" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Student" vertex="1">
+          <mxGeometry height="80" width="40" x="80" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="clubsResp" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Clubs Responsible" vertex="1">
+          <mxGeometry height="80" width="40" x="150" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Club President" vertex="1">
+          <mxGeometry height="80" width="40" x="150" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="clubMember" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Club Member" vertex="1">
+          <mxGeometry height="80" width="40" x="80" y="1350" as="geometry" />
+        </mxCell>
+        <mxCell id="user-uc1" edge="1" parent="1" source="user" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" target="uc1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="user-uc2" edge="1" parent="1" source="user" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="student-uc3" edge="1" parent="1" source="student" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="student-uc4" edge="1" parent="1" source="student" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="student-uc5" edge="1" parent="1" source="student" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubsResp-uc6" edge="1" parent="1" source="clubsResp" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubsResp-uc7" edge="1" parent="1" source="clubsResp" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubsResp-uc8" edge="1" parent="1" source="clubsResp" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubsResp-uc9" edge="1" parent="1" source="clubsResp" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres-uc10" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres-uc11" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres-uc12" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres-uc13" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubPres-uc14" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc14">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="1150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="clubPres-uc15" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="clubMember-uc16" edge="1" parent="1" source="clubMember" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="460" y="1370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="clubMember-uc15" edge="1" parent="1" source="clubMember" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uc15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uNCgmgs6ma84t48twlrE-3" edge="1" parent="1" source="clubPres" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;exitX=0;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="1117" />
+            </Array>
+            <mxPoint x="210" y="960" as="sourcePoint" />
+            <mxPoint x="100" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uNCgmgs6ma84t48twlrE-4" edge="1" parent="1" source="clubMember" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;exitX=0;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.3333333333333333;entryDx=0;entryDy=0;entryPerimeter=0;" target="student" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="1377" />
+              <mxPoint x="30" y="1020" />
+              <mxPoint x="30" y="347" />
+            </Array>
+            <mxPoint x="100" y="1020" as="sourcePoint" />
+            <mxPoint x="30" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uNCgmgs6ma84t48twlrE-5" edge="1" parent="1" source="student" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="290" />
+            </Array>
+            <mxPoint x="110" y="850" as="sourcePoint" />
+            <mxPoint x="100" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uNCgmgs6ma84t48twlrE-7" edge="1" parent="1" source="clubPres" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="uNCgmgs6ma84t48twlrE-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="820" as="sourcePoint" />
+            <mxPoint x="470" y="860" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Admin" vertex="1">
+          <mxGeometry height="80" width="40" x="90" y="-200" as="geometry" />
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-6" edge="1" parent="1" source="rC8RQ_Xzs2TtSy2UCyTL-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="-170" as="sourcePoint" />
+            <mxPoint x="480" y="-170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-8" edge="1" parent="1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="-160" as="sourcePoint" />
+            <mxPoint x="500" y="-150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-10" edge="1" parent="1" source="rC8RQ_Xzs2TtSy2UCyTL-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-9">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="-120" as="sourcePoint" />
+            <mxPoint x="410" y="-17" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-12" edge="1" parent="1" source="student" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="420" y="480" as="sourcePoint" />
+            <mxPoint x="790" y="594" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-14" edge="1" parent="1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-13">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="160" as="sourcePoint" />
+            <mxPoint x="500" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-15" edge="1" parent="1" source="clubsResp" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="730" />
+            </Array>
+            <mxPoint x="130" y="740" as="sourcePoint" />
+            <mxPoint x="130" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-18" edge="1" parent="1" source="clubsResp" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="770" as="sourcePoint" />
+            <mxPoint x="670" y="836" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rC8RQ_Xzs2TtSy2UCyTL-19" edge="1" parent="1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="rC8RQ_Xzs2TtSy2UCyTL-17">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="740" as="sourcePoint" />
+            <mxPoint x="710" y="836" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
