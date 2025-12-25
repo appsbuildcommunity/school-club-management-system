@@ -1,12 +1,68 @@
 # Student Club Management System - API Documentation
 
+## Public End Points
+
+the same urls as <Public end points> with and extra /public/.. (ex: /api/public/posts) and the api/auth/ urls.
+
 ## Authentication & Authorization
 
 All endpoints require JWT authentication via `Authorization: Bearer <token>` header unless specified as public.
 
 ---
 
-## Guest Endpoints (Public Access)
+## Shared End Points
+
+### Clubs
+
+#### GET `/api/clubs`
+
+Get all clubs.
+
+**Response:** `200 OK`
+
+```json
+{
+  "clubs": [
+    {
+      "clubName": "string",
+      "description": "string",
+      "profilePicture": {
+         "url": "string"
+       }
+      "memberCount": 25
+    }
+  ]
+}
+```
+
+#### GET `/api/clubs/{club_name}`
+
+Get all clubs.
+
+**Response:** `200 OK`
+
+```json
+{
+      "clubName": "string",
+      "description": "string",
+      "profilePicture": {
+         "url": "string"
+       }
+      "stuff": [
+          {
+            "username": "string"
+            "firstName": "string"
+            "lastName": "string"
+            "profilePicture": {
+               "url": "string"
+             }
+            "role": CLUB_PRESIDENT | ASSISTENT_MEMBER
+            "roleDescription": "(optional)string"
+          }
+        ]
+      "memberCount": 25
+}
+```
 
 ### Posts
 
@@ -18,7 +74,7 @@ Get all posts (the returned posts depends on the user role (GUEST, STUDENT, MEMB
 
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20)
-- `club_username` (optional): Filter by club username
+- `club_name` (optional): Filter by club username
 
 **Response:** `200 OK`
 
@@ -32,7 +88,7 @@ Get all posts (the returned posts depends on the user role (GUEST, STUDENT, MEMB
       "club": {
             "id": "string"
             "name": "string",
-            "profile_picture": {
+            "profilePicture": {
                 "url": "string"
             }
         },
@@ -122,7 +178,7 @@ Get all events.
 
 **Query Parameters:**
 
-- `page`, `limit`, `club_username` (same as posts)
+- `page`, `limit`, `club_name` (same as posts)
 - `start_date` (optional): Filter events from date
 - `end_date` (optional): Filter events until date
 
@@ -146,7 +202,11 @@ Get all events.
       "visibility": "PUBLIC | STUDENTS_ONLY | PRIVATE",
       "startDate": "date",
       "endDate": "date",
-      "location": "string",
+      "location": {
+            "id": "number",
+            "name": "string",
+            "internalLocation": "boolean"
+        },
       "attachments": [
         {
           "attachmentId": "string",
@@ -182,7 +242,11 @@ Get a specific event.
       "visibility": "PUBLIC | STUDENTS_ONLY | PRIVATE",
       "startDate": "date",
       "endDate": "date",
-      "location": "string",
+      "location": {
+            "id": "number",
+            "name": "string",
+            "internalLocation": "boolean"
+        },
       "attachments": [
         {
           "attachmentId": "string",
@@ -229,7 +293,6 @@ Get comments of a specific event.
 ```
 
 ---
-
 
 ## User Endpoints (Authenticated Users)
 
@@ -286,10 +349,9 @@ Login user.
 
 ```json
 {
-  "userId": "string",
   "username": "string",
   "email": "string",
-  "roles": ["Student", "ClubPresident"],
+  "roles": "STUDENT"|"CLUBPRESIDENT"|"ADMIN"|"USER",
   "token": "jwt_token_string"
 }
 ```
@@ -298,7 +360,7 @@ Login user.
 
 #### POST `/api/posts/{postId}/comments`
 
-Add comment to a PUBLIC post.
+Add comment to a post.
 
 **Request Body:**
 
@@ -315,66 +377,25 @@ Add comment to a PUBLIC post.
   "commentId": "string",
   "content": "string",
   "userId": "string",
-  "createdAt": "2024-01-15T12:00:00Z"
+  "createdAt": "date"
 }
 ```
 
 #### POST `/api/events/{eventId}/comments`
 
-Add comment to a PUBLIC event.
+Add comment to a event (same as to post).
 
 ---
 
 ## Student Endpoints
 
-### Posts & Events
-
-#### GET `/api/posts`
-
-Get PUBLIC and STUDENTS_ONLY posts.
-
-**Query Parameters:** Same as public posts endpoint
-
-**Response:** `200 OK` (Similar structure with additional STUDENTS_ONLY posts)
-
-#### GET `/api/events`
-
-Get PUBLIC and STUDENTS_ONLY events.
-
 ### Club Membership
-
-#### GET `/api/clubs`
-
-Get all clubs.
-
-**Response:** `200 OK`
-
-```json
-{
-  "clubs": [
-    {
-      "clubId": "string",
-      "clubName": "string",
-      "description": "string",
-      "presidentName": "string",
-      "memberCount": 25
-    }
-  ]
-}
-```
 
 #### POST `/api/clubs/{clubId}/join-request`
 
-Request to join a club.
+Request to join a club (STUDENT or CLUBS_PRESIDENT)
 
 **Response:** `201 Created`
-
-```json
-{
-  "message": "Join request submitted successfully",
-  "requestId": "string"
-}
-```
 
 #### GET `/api/students/me/clubs`
 
@@ -386,11 +407,14 @@ Get student's club memberships.
 {
   "memberships": [
     {
-      "clubId": "string",
       "clubName": "string",
-      "membershipId": "string",
-      "clubRole": "MEMBER",
-      "joinedDate": "2024-01-01T00:00:00Z"
+      "clubFullName": "string"
+      "description": "string"
+      "profilePicture": {
+         "url": "string"
+       }
+      "clubRole": Role,
+      "joinedDate": "date"
     }
   ]
 }
@@ -400,22 +424,13 @@ Get student's club memberships.
 
 #### POST `/api/events/{eventId}/book`
 
-Book an event (PUBLIC or STUDENTS_ONLY).
+Book an event.
 
 **Response:** `201 Created`
 
-```json
-{
-  "bookingId": "string",
-  "eventId": "string",
-  "userId": "string",
-  "bookedAt": "2024-01-15T12:00:00Z"
-}
-```
+#### GET `/api/me/bookings`
 
-#### GET `/api/students/me/bookings`
-
-Get student's event bookings.
+Get user event bookings.
 
 **Response:** `200 OK`
 
@@ -426,8 +441,8 @@ Get student's event bookings.
       "bookingId": "string",
       "eventId": "string",
       "eventTitle": "string",
-      "startDate": "2024-02-01T14:00:00Z",
-      "bookedAt": "2024-01-20T10:00:00Z"
+      "startDate": "date",
+      "bookedAt": "date"
     }
   ]
 }
@@ -438,133 +453,6 @@ Get student's event bookings.
 Cancel event booking.
 
 **Response:** `204 No Content`
-
-### Comments (Student)
-
-#### POST `/api/posts/{postId}/comments`
-
-Comment on PUBLIC and STUDENTS_ONLY posts.
-
-#### POST `/api/events/{eventId}/comments`
-
-Comment on PUBLIC and STUDENTS_ONLY events.
-
----
-
-## Admin Endpoints
-
-### User Management
-
-#### GET `/api/admin/users`
-
-Get all users.
-
-**Query Parameters:**
-
-- `page`, `limit`
-- `role` (optional): Filter by role
-
-**Response:** `200 OK`
-
-```json
-{
-  "users": [
-    {
-      "userId": "string",
-      "username": "string",
-      "email": "string",
-      "roles": ["Student"],
-      "createdAt": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "pagination": {}
-}
-```
-
-#### PUT `/api/admin/users/{userId}/role`
-
-Assign Student role to user.
-
-**Request Body:**
-
-```json
-{
-  "role": "Student"
-}
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "userId": "string",
-  "username": "string",
-  "roles": ["Student"]
-}
-```
-
-#### DELETE `/api/admin/users/{userId}`
-
-Kick out/ban a user.
-
-**Response:** `204 No Content`
-
-### Statistics
-
-#### GET `/api/admin/statistics`
-
-View system statistics.
-
-**Response:** `200 OK`
-
-```json
-{
-  "totalUsers": 500,
-  "totalStudents": 450,
-  "totalClubs": 25,
-  "totalPosts": 1200,
-  "totalEvents": 180,
-  "activeStudents": 320,
-  "upcomingEvents": 15
-}
-```
-
-#### GET `/api/admin/statistics/clubs`
-
-Get club-wise statistics.
-
-**Response:** `200 OK`
-
-```json
-{
-  "clubs": [
-    {
-      "clubId": "string",
-      "clubName": "string",
-      "memberCount": 40,
-      "postCount": 85,
-      "eventCount": 12,
-      "activeMembers": 35
-    }
-  ]
-}
-```
-
-### ClubsResponsible Management
-
-#### PUT `/api/admin/users/{userId}/clubs-responsible`
-
-Assign ClubsResponsible role.
-
-**Response:** `200 OK`
-
-```json
-{
-  "userId": "string",
-  "responsibleId": "string",
-  "assignedAt": "2024-01-15T10:00:00Z"
-}
-```
 
 ---
 
@@ -581,22 +469,13 @@ Create a new club.
 ```json
 {
   "clubName": "string",
+  "clubFullName": "string"
   "description": "string",
-  "presidentUserId": "string"
+  "presidentUsername": "string"(optional)
 }
 ```
 
 **Response:** `201 Created`
-
-```json
-{
-  "clubId": "string",
-  "clubName": "string",
-  "description": "string",
-  "presidentId": "string",
-  "createdAt": "2024-01-15T10:00:00Z"
-}
-```
 
 #### PUT `/api/clubs/{clubId}/president`
 
@@ -606,32 +485,15 @@ Change club president.
 
 ```json
 {
-  "newPresidentUserId": "string"
+  "presidentUsername": "string"
 }
 ```
 
 **Response:** `200 OK`
-
-```json
-{
-  "clubId": "string",
-  "previousPresidentId": "string",
-  "newPresidentId": "string",
-  "changedAt": "2024-01-15T11:00:00Z"
-}
-```
 
 ### Content Moderation
 
-#### GET `/api/responsible/posts`
-
-View all posts (including MEMBERS_ONLY).
-
-**Query Parameters:** `page`, `limit`, `visibility`, `clubId`
-
-**Response:** `200 OK`
-
-#### PUT `/api/responsible/posts/{postId}/hide`
+#### PUT `/api/posts/{postId}/hide`
 
 Hide a post.
 
@@ -645,31 +507,33 @@ Hide a post.
 
 **Response:** `200 OK`
 
+#### PUT `/api/events/{eventId}/hide`
+
+Hide an event.
+
+**Request Body:**
+
 ```json
 {
-  "postId": "string",
-  "hidden": true,
-  "hiddenAt": "2024-01-15T12:00:00Z",
   "reason": "string"
 }
 ```
-
-#### PUT `/api/responsible/events/{eventId}/hide`
-
-Hide an event.
 
 **Response:** `200 OK`
 
 ### Reservation Management
 
-#### GET `/api/responsible/reservations`
+#### GET `/api/reservations`
 
-View all event reservations/bookings.
+View all event reservations.
 
 **Query Parameters:**
 
-- `eventId` (optional)
+- `location` (optional)
 - `startDate`, `endDate` (optional)
+- `status` (optional)
+- `club_name` (optional)
+- `event_id` (optional)
 - `page`, `limit`
 
 **Response:** `200 OK`
@@ -678,44 +542,42 @@ View all event reservations/bookings.
 {
   "reservations": [
     {
-      "bookingId": "string",
-      "eventId": "string",
-      "eventTitle": "string",
-      "userId": "string",
-      "username": "string",
-      "bookedAt": "2024-01-15T10:00:00Z"
+      "id": "number",
+      "startDate": "date",
+      "endDate": "date",
+      "clubName": "string",
+      "location": {
+        "id": "number",
+        "name": "string",
+        "internalLocation": "boolean"
+      }
     }
   ],
   "pagination": {}
 }
 ```
 
-#### GET `/api/responsible/calendar`
+#### PUT `/api/reservations/{reservationId}`
 
-Get reservation calendar view.
+Update a reservation status.
 
 **Query Parameters:**
 
-- `startDate`: Start date
-- `endDate`: End date
+- `status` (optional)
 
-**Response:** `200 OK`
+**Request body:**
 
 ```json
 {
-  "events": [
-    {
-      "eventId": "string",
-      "title": "string",
-      "startDate": "2024-02-01T14:00:00Z",
-      "endDate": "2024-02-01T18:00:00Z",
-      "location": "string",
-      "bookingsCount": 45,
-      "capacity": 100
-    }
-  ]
+    "alternatives": [
+        {
+            "id": "number"
+        }
+    ] (optional)
 }
 ```
+
+**Response:** `200 OK`
 
 ---
 
@@ -735,12 +597,19 @@ Get club members.
 {
   "members": [
     {
-      "membershipId": "string",
-      "userId": "string",
       "username": "string",
+      "firstName": "string",
+      "lastName": "string",
+      "profilePicture": {
+         "url": "string"
+       }
       "email": "string",
-      "clubRole": "MEMBER",
-      "joinedDate": "2024-01-01T00:00:00Z"
+      "membership": {
+        "id": "number",
+        "clubRole": "number",
+        "description": "string",
+        "joinedDate": "date"
+        },
     }
   ],
   "pagination": {}
@@ -751,43 +620,42 @@ Get club members.
 
 Get pending join requests.
 
+**Query Parameters:** `page`, `limit`
+
+- `status` (optional)
+
 **Response:** `200 OK`
 
 ```json
 {
-  "requests": [
+  "joinRequest": [
     {
-      "requestId": "string",
-      "userId": "string",
-      "username": "string",
-      "email": "string",
-      "requestedAt": "2024-01-15T09:00:00Z"
+      "id": "string",
+       "user": {
+          "username": "string",
+          "firstName": "string",
+          "lastName": "string",
+          "profilePicture": {
+             "url": "string"
+           }
+          "email": "string",
+         }
+      "joinRequestStatus": DemandStatus,
+      "joinRequestDate": "date"
     }
   ]
 }
 ```
 
-#### POST `/api/clubs/{clubId}/join-requests/{requestId}/accept`
+#### Put `/api/clubs/{clubId}/join-requests/{requestId}`
 
-Accept join request.
+Change join request status.
+
+**Query Parameters:**
+
+- `status` (optional)
 
 **Response:** `200 OK`
-
-```json
-{
-  "membershipId": "string",
-  "userId": "string",
-  "clubId": "string",
-  "clubRole": "MEMBER",
-  "joinedDate": "2024-01-15T12:00:00Z"
-}
-```
-
-#### DELETE `/api/clubs/{clubId}/join-requests/{requestId}`
-
-Reject join request.
-
-**Response:** `204 No Content`
 
 #### DELETE `/api/clubs/{clubId}/members/{membershipId}`
 
@@ -795,50 +663,31 @@ Ban/remove a member.
 
 **Response:** `204 No Content`
 
+#### PUT `/api/clubs/{clubId}/members/{membershipId}`
+
+Change member role.
+
+**Query Parameters:**
+
+- `role` (optional)
+
+**Response:** `200 OK`
+
 ### Assistant Member Management
 
 #### PUT `/api/clubs/{clubId}/members/{membershipId}/assistant`
 
-Assign assistant member role.
+Assign assistant member privileges.
 
 **Request Body:**
 
 ```json
 {
-  "privileges": ["CREATE_POST", "MANAGE_EVENTS", "ACCEPT_MEMBERS"]
+  "privileges": [Privilege]
 }
 ```
 
 **Response:** `200 OK`
-
-```json
-{
-  "privilegeId": "string",
-  "membershipId": "string",
-  "privileges": ["CREATE_POST", "MANAGE_EVENTS"],
-  "grantedDate": "2024-01-15T12:00:00Z"
-}
-```
-
-#### PUT `/api/clubs/{clubId}/assistant/{privilegeId}`
-
-Update assistant privileges.
-
-**Request Body:**
-
-```json
-{
-  "privileges": ["CREATE_POST", "MANAGE_EVENTS", "VIEW_ANALYTICS"]
-}
-```
-
-**Response:** `200 OK`
-
-#### DELETE `/api/clubs/{clubId}/assistant/{privilegeId}`
-
-Remove assistant privileges.
-
-**Response:** `204 No Content`
 
 ### Member History
 
@@ -869,6 +718,8 @@ View membership history.
 
 ### Posts Management
 
+Authorized: CLUB_PRESIDENT, and all ASSISTANT_MEMBER with the right privileges
+
 #### POST `/api/clubs/{clubId}/posts`
 
 Create a club post.
@@ -878,12 +729,11 @@ Create a club post.
 ```json
 {
   "title": "string",
-  "content": "string",
-  "visibility": "MEMBERS_ONLY",
+  "description": "string",
+  "visibility": Visibility,
   "attachments": [
     {
-      "type": "IMAGE",
-      "url": "string"
+      "file": "binary"??
     }
   ]
 }
@@ -893,12 +743,17 @@ Create a club post.
 
 ```json
 {
-  "postId": "string",
+  "id": "string",
   "title": "string",
-  "content": "string",
-  "clubId": "string",
-  "visibility": "MEMBERS_ONLY",
-  "createdAt": "2024-01-15T12:00:00Z"
+  "description": "string",
+  "visibility": Visibility,
+  "attachments": [
+    {
+      "type": AttachmentType,
+      "url": "string"
+    }
+  ]
+  "createdAt": "date"
 }
 ```
 
@@ -927,12 +782,22 @@ Create a club event.
 ```json
 {
   "title": "string",
-  "visibility": "STUDENTS_ONLY",
-  "startDate": "2024-02-01T14:00:00Z",
-  "endDate": "2024-02-01T18:00:00Z",
-  "location": "string",
   "description": "string",
-  "capacity": 100
+  "visibility": Visibility,
+  "startDate": "date",
+  "endDate": "date",
+  "attachments": [
+    {
+      "file": "binary"??
+    }
+  ]
+  "reservations": [
+     {
+        "id": "number",
+        "startDate": "date",
+        "endDate": "date"
+     }
+    ],
 }
 ```
 
@@ -940,21 +805,34 @@ Create a club event.
 
 ```json
 {
-  "eventId": "string",
+  "id": "number"
   "title": "string",
-  "clubId": "string",
-  "visibility": "STUDENTS_ONLY",
-  "startDate": "2024-02-01T14:00:00Z",
-  "endDate": "2024-02-01T18:00:00Z",
-  "location": "string",
-  "capacity": 100,
-  "createdAt": "2024-01-15T12:00:00Z"
+  "description": "string",
+  "visibility": Visibility,
+  "startDate": "date",
+  "endDate": "date",
+  "attachments": [
+    {
+      "type": AttachementType;
+      "url": "string"
+    }
+  ]
+  "reservations": [
+     {
+        "id": "number",
+        "startDate": "date",
+        "endDate": "date"
+        "status": DemandStatus
+     }
+    ],
 }
 ```
 
 #### PUT `/api/clubs/{clubId}/events/{eventId}`
 
 Update a club event.
+
+**Request Body:** Same as create
 
 **Response:** `200 OK`
 
@@ -964,79 +842,170 @@ Delete a club event.
 
 **Response:** `204 No Content`
 
-#### GET `/api/clubs/{clubId}/events/{eventId}/bookings`
+<!-- #### GET `/api/clubs/{clubId}/events/{eventId}/bookings` -->
 
-View event bookings.
+<!-- View event bookings. -->
 
-**Response:** `200 OK`
+<!-- **Response:** `200 OK` -->
 
-```json
-{
-  "bookings": [
-    {
-      "bookingId": "string",
-      "userId": "string",
-      "username": "string",
-      "email": "string",
-      "bookedAt": "2024-01-20T10:00:00Z"
-    }
-  ],
-  "totalBookings": 45,
-  "capacity": 100
-}
-```
+<!-- ```json -->
+<!-- { -->
+<!--   "bookings": [ -->
+<!--     { -->
+<!--       "bookingId": "string", -->
+<!--       "userId": "string", -->
+<!--       "username": "string", -->
+<!--       "email": "string", -->
+<!--       "bookedAt": "2024-01-20T10:00:00Z" -->
+<!--     } -->
+<!--   ], -->
+<!--   "totalBookings": 45, -->
+<!--   "capacity": 100 -->
+<!-- } -->
+<!-- ``` -->
 
-### Comments (Club President)
+<!-- ### Comments (Club President) -->
 
-#### POST `/api/posts/{postId}/comments`
+<!-- #### POST `/api/posts/{postId}/comments` -->
 
-Comment on PUBLIC, STUDENTS_ONLY, and MEMBERS_ONLY posts.
+<!-- Comment on PUBLIC, STUDENTS_ONLY, and MEMBERS_ONLY posts. -->
 
-#### POST `/api/events/{eventId}/comments`
+<!-- #### POST `/api/events/{eventId}/comments` -->
 
-Comment on PUBLIC, STUDENTS_ONLY, and MEMBERS_ONLY events.
+<!-- Comment on PUBLIC, STUDENTS_ONLY, and MEMBERS_ONLY events. -->
 
-#### DELETE `/api/posts/{postId}/comments/{commentId}`
+<!-- #### DELETE `/api/posts/{postId}/comments/{commentId}` -->
 
-Delete a comment on club posts.
+<!-- Delete a comment on club posts. -->
 
-**Response:** `204 No Content`
+<!-- **Response:** `204 No Content` -->
 
 ---
 
-## Club Member Endpoints
+<!-- ## Club Member Endpoints -->
 
-### Access Content
+<!-- ### Access Content -->
 
-#### GET `/api/clubs/{clubId}/posts`
+<!-- ### Bookings -->
 
-View all club posts (PUBLIC, STUDENTS_ONLY, MEMBERS_ONLY).
+<!-- #### POST `/api/events/{eventId}/book` -->
 
-**Query Parameters:** `page`, `limit`, `visibility`
+<!-- Book any event (member has access to). -->
 
-**Response:** `200 OK`
+<!-- ## Admin Endpoints -->
 
-#### GET `/api/clubs/{clubId}/events`
+<!-- ### User Management -->
 
-View all club events.
+<!-- #### GET `/api/admin/users` -->
 
-**Response:** `200 OK`
+<!-- Get all users. -->
 
-### Comments
+<!-- **Query Parameters:** -->
 
-#### POST `/api/posts/{postId}/comments`
+<!-- - `page`, `limit` -->
+<!-- - `role` (optional): Filter by role -->
 
-Comment on all visibility level posts (if member).
+<!-- **Response:** `200 OK` -->
 
-#### POST `/api/events/{eventId}/comments`
+<!-- ```json -->
+<!-- { -->
+<!--   "users": [ -->
+<!--     { -->
+<!--       "userId": "string", -->
+<!--       "username": "string", -->
+<!--       "email": "string", -->
+<!--       "roles": ADMIN | USER | STUDENT, -->
+<!--       "createdAt": "2024-01-01T00:00:00Z" -->
+<!--     } -->
+<!--   ], -->
+<!--   "pagination": {} -->
+<!-- } -->
+<!-- ``` -->
 
-Comment on all visibility level events (if member).
+<!-- #### PUT `/api/admin/users/{userId}/role` -->
 
-### Bookings
+<!-- Assign Student role to user. -->
 
-#### POST `/api/events/{eventId}/book`
+<!-- **Request Body:** -->
 
-Book any event (member has access to).
+<!-- ```json -->
+<!-- { -->
+<!--   "role": "Student" -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- **Response:** `200 OK` -->
+
+<!-- ```json -->
+<!-- { -->
+<!--   "userId": "string", -->
+<!--   "username": "string", -->
+<!--   "roles": ["Student"] -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- #### DELETE `/api/admin/users/{userId}` -->
+
+<!-- Kick out/ban a user. -->
+
+<!-- **Response:** `204 No Content` -->
+
+<!-- ### Statistics -->
+
+<!-- #### GET `/api/admin/statistics` -->
+
+<!-- View system statistics. -->
+
+<!-- **Response:** `200 OK` -->
+
+<!-- ```json -->
+<!-- { -->
+<!--   "totalUsers": 500, -->
+<!--   "totalStudents": 450, -->
+<!--   "totalClubs": 25, -->
+<!--   "totalPosts": 1200, -->
+<!--   "totalEvents": 180, -->
+<!--   "activeStudents": 320, -->
+<!--   "upcomingEvents": 15 -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- #### GET `/api/admin/statistics/clubs` -->
+
+<!-- Get club-wise statistics. -->
+
+<!-- **Response:** `200 OK` -->
+
+<!-- ```json -->
+<!-- { -->
+<!--   "clubs": [ -->
+<!--     { -->
+<!--       "clubId": "string", -->
+<!--       "clubName": "string", -->
+<!--       "memberCount": 40, -->
+<!--       "postCount": 85, -->
+<!--       "eventCount": 12, -->
+<!--       "activeMembers": 35 -->
+<!--     } -->
+<!--   ] -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- ### ClubsResponsible Management -->
+
+<!-- #### PUT `/api/admin/users/{userId}/clubs-responsible` -->
+
+<!-- Assign ClubsResponsible role. -->
+
+<!-- **Response:** `200 OK` -->
+
+<!-- ```json -->
+<!-- { -->
+<!--   "userId": "string", -->
+<!--   "responsibleId": "string", -->
+<!--   "assignedAt": "2024-01-15T10:00:00Z" -->
+<!-- } -->
+<!-- ``` -->
 
 ---
 
@@ -1072,4 +1041,4 @@ Book any event (member has access to).
 2. **Pagination**: Default page size is 20, max is 100
 3. **Role Hierarchy**: ClubsResponsible cannot be ClubPresident or AssistantMember
 4. **Visibility Levels**: PUBLIC < STUDENTS_ONLY < MEMBERS_ONLY
-5. **Assistant Privileges**: Customizable per club (e.g., CREATE_POST, MANAGE_EVENTS, ACCEPT_MEMBERS, VIEW_ANALYTICS)
+5. **Assistant Privileges**: Customizable per club
