@@ -222,7 +222,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 ### Get Club Details
 
-**GET** `/api/clubs/{club_name}`
+**GET** `/api/clubs/{clubName}`
 
 **Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
 
@@ -404,7 +404,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Query Parameters:**
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
-- `userId` (string, optional): Filter by user
+- `user_id` (string, optional): Filter by user
 
 **Response:** `200 OK`
 ```json
@@ -875,8 +875,8 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **Query Parameters:**
 - `location` (string, optional): Filter by location
-- `startDate` (string, optional): Filter from date (ISO 8601)
-- `endDate` (string, optional): Filter until date (ISO 8601)
+- `start_date` (string, optional): Filter from date (ISO 8601)
+- `end_date` (string, optional): Filter until date (ISO 8601)
 - `status` (DemandStatus, optional): Filter by status
 - `club_name` (string, optional): Filter by club
 - `event_id` (string, optional): Filter by event
