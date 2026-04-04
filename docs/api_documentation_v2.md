@@ -6,41 +6,41 @@
 
 ```typescript
 enum UserRole {
-  GUEST = "GUEST",
-  USER = "USER",
-  STUDENT = "STUDENT",
-  ADMIN = "ADMIN"
+  GUEST = 'GUEST',
+  USER = 'USER',
+  STUDENT = 'STUDENT',
+  ADMIN = 'ADMIN',
 }
 
 enum ClubRole {
-  MEMBER = "MEMBER",
-  ASSISTANT_MEMBER = "ASSISTANT_MEMBER",
-  CLUB_PRESIDENT = "CLUB_PRESIDENT"
+  MEMBER = 'MEMBER',
+  ASSISTANT_MEMBER = 'ASSISTANT_MEMBER',
+  CLUB_PRESIDENT = 'CLUB_PRESIDENT',
 }
 
 enum Visibility {
-  PUBLIC = "PUBLIC",
-  STUDENTS_ONLY = "STUDENTS_ONLY",
-  MEMBERS_ONLY = "MEMBERS_ONLY"
+  PUBLIC = 'PUBLIC',
+  STUDENTS_ONLY = 'STUDENTS_ONLY',
+  MEMBERS_ONLY = 'MEMBERS_ONLY',
 }
 
 enum AttachmentType {
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
-  DOCUMENT = "DOCUMENT"
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  DOCUMENT = 'DOCUMENT',
 }
 
 enum DemandStatus {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  CANCELLED = "CANCELLED"
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
 }
 
 enum Privilege {
-  MANAGE_POSTS = "MANAGE_POSTS",
-  MANAGE_EVENTS = "MANAGE_EVENTS",
-  MANAGE_MEMBERS = "MANAGE_MEMBERS"
+  MANAGE_POSTS = 'MANAGE_POSTS',
+  MANAGE_EVENTS = 'MANAGE_EVENTS',
+  MANAGE_MEMBERS = 'MANAGE_MEMBERS',
 }
 ```
 
@@ -49,65 +49,65 @@ enum Privilege {
 ```typescript
 // User Reference
 interface UserReference {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  id: string
+  username: string
+  firstName: string
+  lastName: string
+  email: string
   profilePicture: {
-    url: string;
-  };
+    url: string
+  }
 }
 
 // Club Reference
 interface ClubReference {
-  id: string;
-  name: string;
-  description: string;
+  id: string
+  name: string
+  description: string
   profilePicture: {
-    url: string;
-  };
+    url: string
+  }
 }
 
 // Location
 interface Location {
-  id: number;
-  name: string;
-  internalLocation: boolean;
+  id: number
+  name: string
+  internalLocation: boolean
 }
 
 // Attachment
 interface Attachment {
-  attachmentId: string;
-  type: AttachmentType;
-  url: string;
+  attachmentId: string
+  type: AttachmentType
+  url: string
 }
 
 // Comment
 interface Comment {
-  commentId: string;
-  content: string;
-  user: UserReference;
-  createdAt: string; // ISO 8601 date
+  commentId: string
+  content: string
+  user: UserReference
+  createdAt: string // ISO 8601 date
 }
 
 // Pagination
 interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
+  currentPage: number
+  totalPages: number
+  totalItems: number
 }
 
 // Member
 interface Member {
-  username: string;
-  firstName: string;
-  lastName: string;
+  username: string
+  firstName: string
+  lastName: string
   profilePicture?: {
-    url: string;
-  };
-  role: ClubRole;
-  roleDescription?: string;
+    url: string
+  }
+  role: ClubRole
+  roleDescription?: string
 }
 ```
 
@@ -128,6 +128,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public
 
 **Request Body:**
+
 ```json
 {
   "firstName": "string",
@@ -149,6 +150,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public
 
 **Query Parameters:**
+
 - `code` (string, required): Verification code sent via email
 
 **Response:** `200 OK`
@@ -162,6 +164,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public
 
 **Query Parameters:**
+
 - `username` (string, required): Username to receive verification code
 
 **Response:** `200 OK`
@@ -175,6 +178,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public
 
 **Request Body:**
+
 ```json
 {
   "identifier": "string", // username or email
@@ -183,6 +187,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "username": "string",
@@ -203,6 +208,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
 
 **Response:** `200 OK`
+
 ```json
 {
   "clubs": [
@@ -227,6 +233,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
 
 **Response:** `200 OK`
+
 ```json
 {
   "clubName": "string",
@@ -248,6 +255,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUBS_RESPONSIBLE, ADMIN
 
 **Request Body:**
+
 ```json
 {
   "clubName": "string",
@@ -268,6 +276,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUBS_RESPONSIBLE, ADMIN
 
 **Request Body:**
+
 ```json
 {
   "presidentUsername": "string"
@@ -282,13 +291,14 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/clubs/{clubId}/members`
 
-**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
-
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER, MEMBER
 **Query Parameters:**
+
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
 
 **Response:** `200 OK`
+
 ```json
 {
   "members": [
@@ -321,11 +331,13 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
 
 **Query Parameters:**
+
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
 - `status` (DemandStatus, optional): Filter by status
 
 **Response:** `200 OK`
+
 ```json
 {
   "joinRequests": [
@@ -349,6 +361,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
 
 **Query Parameters:**
+
 - `status` (DemandStatus, optional): New status
 
 **Response:** `200 OK`
@@ -359,7 +372,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **DELETE** `/api/clubs/{clubId}/members/{membershipId}`
 
-**Authorization:** CLUB_PRESIDENT
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
 
 **Response:** `204 No Content`
 
@@ -369,9 +382,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **PUT** `/api/clubs/{clubId}/members/{membershipId}`
 
-**Authorization:** CLUB_PRESIDENT
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
 
 **Query Parameters:**
+
 - `role` (ClubRole, optional): New role
 
 **Response:** `200 OK`
@@ -385,6 +399,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT
 
 **Request Body:**
+
 ```json
 {
   "privileges": [Privilege]
@@ -402,11 +417,13 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_MEMBERS privilege)
 
 **Query Parameters:**
+
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
 - `user_id` (string, optional): Filter by user
 
 **Response:** `200 OK`
+
 ```json
 {
   "history": [
@@ -430,7 +447,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/clubs/{clubId}/join-request`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** STUDENT
 
 **Response:** `201 Created`
 
@@ -443,6 +460,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** STUDENT, CLUB_PRESIDENT
 
 **Response:** `200 OK`
+
 ```json
 {
   "memberships": [
@@ -468,14 +486,16 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/posts`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Query Parameters:**
+
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
 - `club_name` (string, optional): Filter by club
 
 **Response:** `200 OK`
+
 ```json
 {
   "posts": [
@@ -499,9 +519,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/posts/{postId}`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Response:** `200 OK`
+
 ```json
 {
   "postId": "string",
@@ -521,9 +542,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/posts/{postId}/comments`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Response:** `200 OK`
+
 ```json
 {
   "comments": [Comment]
@@ -539,6 +561,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS privilege)
 
 **Request Body:**
+
 ```json
 {
   "title": "string",
@@ -553,6 +576,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "id": "string",
@@ -592,9 +616,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **PUT** `/api/posts/{postId}/hide`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** CLUBS_RESPONSIBLE
 
 **Request Body:**
+
 ```json
 {
   "reason": "string"
@@ -609,9 +634,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/posts/{postId}/comments`
 
-**Authorization:** USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Request Body:**
+
 ```json
 {
   "content": "string"
@@ -619,6 +645,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "commentId": "string",
@@ -636,9 +663,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/events`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Query Parameters:**
+
 - `page` (number, optional): Default 1
 - `limit` (number, optional): Default 20, max 100
 - `club_name` (string, optional): Filter by club
@@ -646,6 +674,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 - `end_date` (string, optional): Filter events until date (ISO 8601)
 
 **Response:** `200 OK`
+
 ```json
 {
   "events": [
@@ -671,9 +700,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/events/{eventId}`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Response:** `200 OK`
+
 ```json
 {
   "eventId": "string",
@@ -695,9 +725,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/events/{eventId}/comments`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Response:** `200 OK`
+
 ```json
 {
   "comments": [Comment]
@@ -713,6 +744,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
 
 **Request Body:**
+
 ```json
 {
   "title": "string",
@@ -736,6 +768,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "id": "number",
@@ -780,13 +813,31 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 ---
 
+### Accept Reservation Alternative
+
+**PUT** `/api/clubs/{clubId}/events/{eventId}/reservations/{reservationId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Request Body:**
+
+```json
+{
+  "alternativeId": "number"
+}
+```
+
+**Response:** `204 No Content`
+
+---
 ### Hide Event
 
 **PUT** `/api/events/{eventId}/hide`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** CLUBS_RESPONSIBLE
 
 **Request Body:**
+
 ```json
 {
   "reason": "string"
@@ -801,9 +852,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/events/{eventId}/comments`
 
-**Authorization:** USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 **Request Body:**
+
 ```json
 {
   "content": "string"
@@ -811,6 +863,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "commentId": "string",
@@ -826,7 +879,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/events/{eventId}/book`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** USER 
 
 **Response:** `201 Created`
 
@@ -834,9 +887,9 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 ### Cancel Event Booking
 
-**DELETE** `/api/events/{eventId}/book`
+**DELETE** `/api/events/{eventId}/book/me`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** USER 
 
 **Response:** `204 No Content`
 
@@ -846,9 +899,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/me/bookings`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** USER
 
 **Response:** `200 OK`
+
 ```json
 {
   "bookings": [
@@ -863,6 +917,26 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 }
 ```
 
+### Get Event Bookings
+
+**GET** `/api/event/{eventId}/bookings`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Response:** `200 OK`
+
+```json
+{
+  "bookings": [
+    {
+      "user": UserReference,
+      "bookingId": "string",
+      "bookedAt": "string" // ISO 8601 date
+    }
+  ]
+}
+```
+
 ---
 
 ## Reservation Endpoints
@@ -871,9 +945,10 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **GET** `/api/reservations`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** CLUBS_RESPONSIBLE
 
 **Query Parameters:**
+
 - `location` (string, optional): Filter by location
 - `start_date` (string, optional): Filter from date (ISO 8601)
 - `end_date` (string, optional): Filter until date (ISO 8601)
@@ -884,6 +959,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 - `limit` (number, optional): Default 20, max 100
 
 **Response:** `200 OK`
+
 ```json
 {
   "reservations": [
@@ -906,12 +982,14 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **PUT** `/api/reservations/{reservationId}`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** CLUBS_RESPONSIBLE
 
 **Query Parameters:**
+
 - `status` (DemandStatus, optional): New status
 
 **Request Body:**
+
 ```json
 {
   "alternatives": [
@@ -956,7 +1034,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 1. **Timestamps**: All timestamps are in ISO 8601 format (UTC)
 2. **Pagination**: Default page size is 20, max is 100
-3. **Role Hierarchy**: 
+3. **Role Hierarchy**:
    - CLUBS_RESPONSIBLE cannot be CLUB_PRESIDENT or ASSISTANT_MEMBER
    - CLUB_PRESIDENT can have multiple clubs
 4. **Visibility Levels**: PUBLIC < STUDENTS_ONLY < MEMBERS_ONLY
