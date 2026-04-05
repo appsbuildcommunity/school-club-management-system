@@ -72,6 +72,6 @@ public class User {
   private List<JoinRequest> joinRequests;
 
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @JoinColumn(name = "profile_picture_id", referencedColumnName = "profile_picture_id")
+  @JoinColumn(name = "profile_picture_id", referencedColumnName = "profilePictureId")
   private ProfilePicture profilePicture;
 }
