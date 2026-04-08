@@ -10,11 +10,11 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
-public class S3StorageService {
+public class S3PutService {
 
   private final S3Presigner s3Presigner;
 
-  public S3StorageService(S3Presigner s3Presigner) {
+  public S3PutService(S3Presigner s3Presigner) {
     this.s3Presigner = s3Presigner;
   }
 

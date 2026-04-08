@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.service.storage.S3StorageService;
+import com.appsBuild.club_management_system.service.storage.S3PutService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @AllArgsConstructor
 public class TestController {
 
-  private final S3StorageService s3StorageService;
+  private final S3PutService s3StorageService;
 
   @GetMapping("/upload-profile-pic")
   @ResponseBody
