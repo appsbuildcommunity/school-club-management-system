@@ -57,4 +57,7 @@ public class Event {
 
   @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<LocationReservation> locationReservations;
+
+  @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<Attachment> attachments;
 }

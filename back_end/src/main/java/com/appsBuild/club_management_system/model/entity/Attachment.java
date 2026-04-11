@@ -1,7 +1,6 @@
 package com.appsBuild.club_management_system.model.entity;
 
 import com.appsBuild.club_management_system.model.enums.AttachmentType;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,4 +36,8 @@ public class Attachment {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "post_id", nullable = false)
   private Post post;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "event_id", nullable = false)
+  private Event event;
 }
