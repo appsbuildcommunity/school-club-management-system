@@ -21,7 +21,7 @@ public class ProfilePicture {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long profilePictureId;
 
-  @Column(name = "url", nullable = false, length = 500)
+  @Column(name = "s3_key", nullable = false, length = 500)
   private String url;
 
   @OneToOne(fetch = FetchType.LAZY)

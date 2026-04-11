@@ -28,7 +28,7 @@ public class Attachment {
   @Column(name = "type", nullable = false, length = 20)
   private AttachmentType type;
 
-  @Column(name = "url", nullable = false, length = 500)
+  @Column(name = "s3_key", nullable = false, length = 500)
   private String url;
 
   @ManyToOne(fetch = FetchType.LAZY)
