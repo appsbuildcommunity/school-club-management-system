@@ -52,22 +52,6 @@ public class S3PutService {
   }
 
   /**
-   * Generate a presigned URL for uploading an event thumbnail.
-   *
-   * @param clubId The ID of the club that owns the event
-   * @param eventId The ID of the event
-   * @param originalFilename The name of the file
-   * @return Presigned URL
-   */
-  public String getUploadEventThumbnailPresignedUrl(
-      Long clubId, Long eventId, String originalFilename) {
-    String extension = getFileExtension(originalFilename);
-    String key = String.format("clubs/%d/events/%d/thumbnail.%s", clubId, eventId, extension);
-    String contentType = getContentType(extension);
-    return generatePresignedUrl(key, contentType);
-  }
-
-  /**
    * Generate a presigned URL for uploading an event attachment (PDF, DOC, etc.).
    *
    * @param clubId Club ID
