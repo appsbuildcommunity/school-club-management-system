@@ -27,4 +27,8 @@ public class ProfilePicture {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", referencedColumnName = "user_id")
   private User user;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "club_id", referencedColumnName = "club_id")
+  private Club club;
 }
