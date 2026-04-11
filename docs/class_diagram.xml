@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36" version="29.6.1">
   <diagram name="Page-1" id="hveR1R5teBf00vcE5VuI">
-    <mxGraphModel dx="1488" dy="1591" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2249" dy="2077" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -187,7 +187,7 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-98" parent="attachment" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- type: AttachmentType" vertex="1">
           <mxGeometry height="26" width="180" y="52" as="geometry" />
         </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-100" parent="attachment" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- url: URL" vertex="1">
+        <mxCell id="VWK_g-ktPHabhC2MgE6s-100" parent="attachment" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- s3Key: String" vertex="1">
           <mxGeometry height="26" width="180" y="78" as="geometry" />
         </mxCell>
         <mxCell id="attachmenttype" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="&lt;&lt;enumeration&gt;&gt;&#xa;AttachmentType" vertex="1">
@@ -448,7 +448,7 @@
         <mxCell id="x_qmKzzBZFDT8rWRl6u9-10" parent="x_qmKzzBZFDT8rWRl6u9-9" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="&lt;div style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- profilePictureId&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;: String&lt;/span&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="26" width="180" y="26" as="geometry" />
         </mxCell>
-        <mxCell id="x_qmKzzBZFDT8rWRl6u9-11" parent="x_qmKzzBZFDT8rWRl6u9-9" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- url: String" vertex="1">
+        <mxCell id="x_qmKzzBZFDT8rWRl6u9-11" parent="x_qmKzzBZFDT8rWRl6u9-9" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- s3Key: String" vertex="1">
           <mxGeometry height="26" width="180" y="52" as="geometry" />
         </mxCell>
         <mxCell id="x_qmKzzBZFDT8rWRl6u9-13" edge="1" parent="1" source="VWK_g-ktPHabhC2MgE6s-61" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.857;exitY=1.002;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.115;entryY=0.999;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;" target="x_qmKzzBZFDT8rWRl6u9-11" value="">

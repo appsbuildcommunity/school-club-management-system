@@ -74,8 +74,20 @@
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>s3</artifactId>
         <version>2.42.28</version>
-        <scope>compile</scope>
     </dependency>
+
+    <!-- AWS SNS SDK -->
+    <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>sns</artifactId>
+        <version>2.42.30</version>
+    </dependency>
+    <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-sns</artifactId>
+        <version>1.12.779</version>
+    </dependency>
+
 	</dependencies>
 
 	<build>
