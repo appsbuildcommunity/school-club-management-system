@@ -68,24 +68,6 @@ public class S3PutService {
   }
 
   /**
-   * Generate a presigned URL for uploading an image to the event gallery.
-   *
-   * @param clubId Club ID
-   * @param eventId Event ID
-   * @param originalFilename Original filename (used to extract extension)
-   * @return Presigned URL
-   */
-  public String getUploadEventGalleryImagePresignedUrl(
-      Long clubId, Long eventId, String originalFilename) {
-    String extension = getFileExtension(originalFilename);
-    String uniqueId = UUID.randomUUID().toString();
-    String key =
-        String.format("clubs/%d/events/%d/gallery/%s.%s", clubId, eventId, uniqueId, extension);
-    String contentType = getContentType(extension);
-    return generatePresignedUrl(key, contentType);
-  }
-
-  /**
    * Generate a presigned URL for uploading an event attachment (PDF, DOC, etc.).
    *
    * @param clubId Club ID
@@ -97,25 +79,7 @@ public class S3PutService {
       Long clubId, Long eventId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String uniqueId = UUID.randomUUID().toString();
-    String key =
-        String.format("clubs/%d/events/%d/attachments/%s.%s", clubId, eventId, uniqueId, extension);
-    String contentType = getContentType(extension);
-    return generatePresignedUrl(key, contentType);
-  }
-
-  /**
-   * Generate a presigned URL for uploading post media (image/video).
-   *
-   * @param clubId Club ID
-   * @param postId Post ID
-   * @param originalFilename Original filename
-   * @return Presigned URL
-   */
-  public String getUploadPostMediaPresignedUrl(Long clubId, Long postId, String originalFilename) {
-    String extension = getFileExtension(originalFilename);
-    String uniqueId = UUID.randomUUID().toString();
-    String key =
-        String.format("clubs/%d/posts/%d/media/%s.%s", clubId, postId, uniqueId, extension);
+    String key = String.format("clubs/%d/events/%d/%s.%s", clubId, eventId, uniqueId, extension);
     String contentType = getContentType(extension);
     return generatePresignedUrl(key, contentType);
   }
@@ -132,8 +96,7 @@ public class S3PutService {
       Long clubId, Long postId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String uniqueId = UUID.randomUUID().toString();
-    String key =
-        String.format("clubs/%d/posts/%d/attachments/%s.%s", clubId, postId, uniqueId, extension);
+    String key = String.format("clubs/%d/posts/%d/%s.%s", clubId, postId, uniqueId, extension);
     String contentType = getContentType(extension);
     return generatePresignedUrl(key, contentType);
   }
