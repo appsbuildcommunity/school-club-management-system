@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 public class Club {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "club_id", nullable = false)
   private Long clubId;
 
   @Column(name = "club_name", nullable = false, length = 100)
