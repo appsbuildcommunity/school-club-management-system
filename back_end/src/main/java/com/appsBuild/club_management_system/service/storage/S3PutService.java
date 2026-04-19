@@ -3,6 +3,8 @@ package com.appsBuild.club_management_system.service.storage;
 import java.time.Duration;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -33,7 +35,7 @@ public class S3PutService {
   public String getUploadUserProfilePicturePresignedUrl(Long userId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key = String.format("users/%d/profile_picture.%s", userId, extension);
-    String contentType = getContentType(extension);
+    String contentType = getContentType(originalFilename);
     return generatePresignedUrl(key, contentType);
   }
 
@@ -47,7 +49,7 @@ public class S3PutService {
   public String getUploadClubProfilePicturePresignedUrl(Long clubId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key = String.format("clubs/%d/profile_picture.%s", clubId, extension);
-    String contentType = getContentType(extension);
+    String contentType = getContentType(originalFilename);
     return generatePresignedUrl(key, contentType);
   }
 
@@ -64,7 +66,7 @@ public class S3PutService {
     String extension = getFileExtension(originalFilename);
     String uniqueId = UUID.randomUUID().toString();
     String key = String.format("clubs/%d/events/%d/%s.%s", clubId, eventId, uniqueId, extension);
-    String contentType = getContentType(extension);
+    String contentType = getContentType(originalFilename);
     return generatePresignedUrl(key, contentType);
   }
 
@@ -81,7 +83,7 @@ public class S3PutService {
     String extension = getFileExtension(originalFilename);
     String uniqueId = UUID.randomUUID().toString();
     String key = String.format("clubs/%d/posts/%d/%s.%s", clubId, postId, uniqueId, extension);
-    String contentType = getContentType(extension);
+    String contentType = getContentType(originalFilename);
     return generatePresignedUrl(key, contentType);
   }
 
@@ -106,25 +108,9 @@ public class S3PutService {
     return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
   }
 
-  private String getContentType(String extension) {
-    switch (extension) {
-      case "jpg":
-      case "jpeg":
-        return "image/jpeg";
-      case "png":
-        return "image/png";
-      case "gif":
-        return "image/gif";
-      case "mp4":
-        return "video/mp4";
-      case "pdf":
-        return "application/pdf";
-      case "doc":
-        return "application/msword";
-      case "docx":
-        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      default:
-        return "application/octet-stream";
-    }
+  private String getContentType(String fileName) {
+    return MediaTypeFactory.getMediaType(fileName)
+        .map(MediaType::toString)
+        .orElse("application/octet-stream");
   }
 }
