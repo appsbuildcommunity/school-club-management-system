@@ -830,6 +830,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Response:** `204 No Content`
 
 ---
+
 ### Hide Event
 
 **PUT** `/api/events/{eventId}/hide`
@@ -879,7 +880,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/events/{eventId}/book`
 
-**Authorization:** USER 
+**Authorization:** USER
 
 **Response:** `201 Created`
 
@@ -889,7 +890,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **DELETE** `/api/events/{eventId}/book/me`
 
-**Authorization:** USER 
+**Authorization:** USER
 
 **Response:** `204 No Content`
 
@@ -1004,6 +1005,161 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 ---
 
+## Storage Endpoints
+
+File uploads follow a **two-step presigned URL flow**:
+
+1. **Request a presigned PUT URL** — call the appropriate endpoint below to get a short-lived upload URL and an S3 object key.
+2. **Upload directly to S3** — `PUT` the file to the returned `uploadUrl` with the matching `Content-Type` header. No auth header is needed for this request; the presigned URL is self-authenticating.
+3. **Confirm the upload** — call the verify endpoint with the returned `key` so the backend can validate the upload and persist the reference.
+
+---
+
+### Get Presigned URL — User Profile Picture
+
+**GET** `/api/storage/upload/users/{userId}/profile-picture`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user matching `userId`
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `avatar.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "key": "string"
+}
+```
+---
+
+### Get Presigned URL — Club Profile Picture
+
+**GET** `/api/storage/upload/clubs/{clubId}/profile-picture`
+
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `logo.jpg`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "clubs/{clubId}/profile_picture.{ext}"
+}
+```
+
+**S3 key pattern:** `clubs/{clubId}/profile_picture.{ext}`
+
+---
+
+### Get Presigned URL — Event Attachment
+
+**GET** `/api/storage/upload/clubs/{clubId}/events/{eventId}/attachments`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `schedule.pdf`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "string"
+}
+```
+
+---
+
+### Get Presigned URL — Post Attachment
+
+**GET** `/api/storage/upload/clubs/{clubId}/posts/{postId}/attachments`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `flyer.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "string"
+}
+```
+
+---
+
+### Confirm Upload
+
+**POST** `/api/storage/verify`
+
+Must be called after the file has been successfully PUT to S3. The backend checks that the object exists, then associates it with the correct entity (user, club, event, or post) based on the key pattern. If the associated entity is not found, the orphaned S3 object is automatically deleted.
+
+**Authorization:** Authenticated (same role requirements as the corresponding upload endpoint)
+
+**Query Parameters:**
+
+- `key` (string, required): The S3 object key returned by the presigned URL endpoint
+
+**Response:** `200 OK` — upload confirmed and record saved
+
+**Response:** `404 Not Found` — object not found in S3 (upload may not have completed)
+
+---
+
+### Get Presigned Download URL
+
+**GET** `/api/storage/download`
+
+Returns a short-lived presigned GET URL for any stored S3 object. Use the `key` values returned from entity responses (e.g. `profilePicture.url` contains the key, or use the `url` field on `Attachment`).
+
+**Authorization:** Authenticated; access is subject to the visibility rules of the resource the object belongs to
+
+**Query Parameters:**
+
+- `key` (string, required): The full S3 object key
+
+**Response:** `200 OK`
+
+```json
+{
+  "url": "string"
+}
+```
+
+---
+
+### Upload Flow Example
+
+```
+# 1. Request a presigned URL
+GET /api/storage/upload/clubs/42/posts/7/attachments?filename=flyer.pdf
+→ { "uploadUrl": "https://s3.amazonaws.com/...", "key": "clubs/42/posts/7/550e8400-....pdf" }
+
+# 2. Upload directly to S3 (no Authorization header)
+PUT <uploadUrl>
+Content-Type: application/pdf
+<binary file content>
+→ 200 OK (from S3)
+
+# 3. Confirm the upload
+POST /api/storage/verify?key=clubs/42/posts/7/550e8400-....pdf
+→ 200 OK
+```
+
+---
+
 ## Common Response Codes
 
 - `200 OK` - Successful GET/PUT request
@@ -1040,4 +1196,5 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 4. **Visibility Levels**: PUBLIC < STUDENTS_ONLY < MEMBERS_ONLY
 5. **Assistant Privileges**: Customizable per club
 6. **Public Endpoints**: Also accessible at `/api/public/*` routes (e.g., `/api/public/posts`)
-7. **File Uploads**: Actual implementation format (multipart/form-data, base64, etc.) depends on backend implementation
+7. **File Uploads**: All file uploads use a presigned S3 URL flow — request a PUT URL via `/api/storage/upload/*`, upload directly to S3, then confirm via `POST /api/storage/verify`. See the **Storage Endpoints** section for full details.
+8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**.
