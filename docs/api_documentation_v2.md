@@ -1033,6 +1033,7 @@ File uploads follow a **two-step presigned URL flow**:
   "key": "string"
 }
 ```
+
 ---
 
 ### Get Presigned URL — Club Profile Picture
@@ -1138,27 +1139,140 @@ Returns a short-lived presigned GET URL for any stored S3 object. Use the `key` 
 }
 ```
 
+### Get Presigned URL — Update User Profile Picture
+
+**GET** `/api/storage/update/users/{userId}/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user matching `userId`
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension (e.g. `avatar.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
 ---
 
-### Upload Flow Example
+### Get Presigned URL — Update Club Profile Picture
 
-```
-# 1. Request a presigned URL
-GET /api/storage/upload/clubs/42/posts/7/attachments?filename=flyer.pdf
-→ { "uploadUrl": "https://s3.amazonaws.com/...", "key": "clubs/42/posts/7/550e8400-....pdf" }
+**GET** `/api/storage/update/clubs/{clubId}/profile-picture/{profilePictureId}`
 
-# 2. Upload directly to S3 (no Authorization header)
-PUT <uploadUrl>
-Content-Type: application/pdf
-<binary file content>
-→ 200 OK (from S3)
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
-# 3. Confirm the upload
-POST /api/storage/verify?key=clubs/42/posts/7/550e8400-....pdf
-→ 200 OK
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension (e.g. `logo.jpg`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
 ```
 
 ---
+
+### Get Presigned URL — Update Event Attachment
+
+**GET** `/api/storage/update/clubs/{clubId}/events/{eventId}/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+---
+
+### Get Presigned URL — Update Post Attachment
+
+**GET** `/api/storage/update/clubs/{clubId}/posts/{postId}/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+---
+
+### Confirm Update
+
+**POST** `/api/storage/verify/update`
+
+Must be called after the new file has been successfully PUT to S3. The backend verifies the new object exists, updates the S3 key in the DB, and deletes the old object from S3. If the new object is not found, nothing is changed.
+
+**Authorization:** Authenticated (same role requirements as the corresponding update endpoint)
+
+**Query Parameters:**
+
+- `oldKey` (string, required): The old S3 object key returned by the update presigned URL endpoint
+- `newKey` (string, required): The new S3 object key returned by the update presigned URL endpoint
+
+**Response:** `200 OK` — update confirmed, record updated, old object deleted
+
+**Response:** `404 Not Found` — new object not found in S3 (upload may not have completed)
+
+---
+
+### Delete Attachment
+
+**DELETE** `/api/storage/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS or MANAGE_EVENTS privilege)
+
+**Response:** `204 No Content`
+
+---
+
+### Delete User Profile Picture
+
+**DELETE** `/api/storage/users/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user owning the profile picture
+
+**Response:** `204 No Content`
+
+---
+
+### Delete Club Profile Picture
+
+**DELETE** `/api/storage/clubs/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
+
+## **Response:** `204 No Content`
 
 ## Common Response Codes
 

@@ -1,5 +1,6 @@
 package com.appsBuild.club_management_system.service.storage;
 
+import com.appsBuild.club_management_system.dto.s3Services.response.UploadDtoResponse;
 import java.time.Duration;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,66 +26,40 @@ public class S3PutService {
 
   private static final Duration PRESIGNED_URL_EXPIRATION = Duration.ofMinutes(5);
 
-  /**
-   * Generate a presigned URL for uploading a user's profile picture.
-   *
-   * @param userId The ID of the user
-   * @param originalFilename The name of the file
-   * @return Presigned URL (PUT method)
-   */
-  public String getUploadUserProfilePicturePresignedUrl(Long userId, String originalFilename) {
+  public UploadDtoResponse getUploadUserProfilePicturePresignedUrl(
+      Long userId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
-    String key = String.format("users/%d/profile_picture.%s", userId, extension);
-    String contentType = getContentType(originalFilename);
-    return generatePresignedUrl(key, contentType);
+    String key = String.format("users/%d/%s.%s", userId, UUID.randomUUID(), extension);
+    return buildResponse(key, originalFilename);
   }
 
-  /**
-   * Generate a presigned URL for uploading a club's profile picture.
-   *
-   * @param clubId The ID of the club
-   * @param originalFilename The name of the file
-   * @return Presigned URL
-   */
-  public String getUploadClubProfilePicturePresignedUrl(Long clubId, String originalFilename) {
+  public UploadDtoResponse getUploadClubProfilePicturePresignedUrl(
+      Long clubId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
-    String key = String.format("clubs/%d/profile_picture.%s", clubId, extension);
-    String contentType = getContentType(originalFilename);
-    return generatePresignedUrl(key, contentType);
+    String key = String.format("clubs/%d/%s.%s", clubId, UUID.randomUUID(), extension);
+    return buildResponse(key, originalFilename);
   }
 
-  /**
-   * Generate a presigned URL for uploading an event attachment (PDF, DOC, etc.).
-   *
-   * @param clubId Club ID
-   * @param eventId Event ID
-   * @param originalFilename Original filename
-   * @return Presigned URL
-   */
-  public String getUploadEventAttachmentPresignedUrl(
+  public UploadDtoResponse getUploadEventAttachmentPresignedUrl(
       Long clubId, Long eventId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
-    String uniqueId = UUID.randomUUID().toString();
-    String key = String.format("clubs/%d/events/%d/%s.%s", clubId, eventId, uniqueId, extension);
-    String contentType = getContentType(originalFilename);
-    return generatePresignedUrl(key, contentType);
+    String key =
+        String.format("clubs/%d/events/%d/%s.%s", clubId, eventId, UUID.randomUUID(), extension);
+    return buildResponse(key, originalFilename);
   }
 
-  /**
-   * Generate a presigned URL for uploading a post attachment.
-   *
-   * @param clubId Club ID
-   * @param postId Post ID
-   * @param originalFilename Original filename
-   * @return Presigned URL
-   */
-  public String getUploadPostAttachmentPresignedUrl(
+  public UploadDtoResponse getUploadPostAttachmentPresignedUrl(
       Long clubId, Long postId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
-    String uniqueId = UUID.randomUUID().toString();
-    String key = String.format("clubs/%d/posts/%d/%s.%s", clubId, postId, uniqueId, extension);
+    String key =
+        String.format("clubs/%d/posts/%d/%s.%s", clubId, postId, UUID.randomUUID(), extension);
+    return buildResponse(key, originalFilename);
+  }
+
+  private UploadDtoResponse buildResponse(String key, String originalFilename) {
     String contentType = getContentType(originalFilename);
-    return generatePresignedUrl(key, contentType);
+    String uploadUrl = generatePresignedUrl(key, contentType);
+    return new UploadDtoResponse(uploadUrl, key);
   }
 
   private String generatePresignedUrl(String key, String contentType) {
