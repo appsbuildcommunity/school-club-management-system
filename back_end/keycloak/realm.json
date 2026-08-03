@@ -1,0 +1,65 @@
+{
+  "realm": "school_clubs_management_system",
+  "displayName": "School Clubs Management System",
+  "enabled": true,
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": true,
+  "editUsernameAllowed": false,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "STUDENT",
+        "description": "A registered student of the school community",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      },
+      {
+        "name": "ADMIN",
+        "description": "A user with administrative privileges",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      }
+    ],
+    "client": {}
+  },
+  "defaultRoles": [
+    "STUDENT"
+  ],
+  "clients": [
+    {
+      "clientId": "school_clubs_management_mobile_app",
+      "name": "School Clubs Management Mobile App",
+      "description": "Flutter mobile application for the school club management system",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "frontchannelLogout": false,
+      "redirectUris": [
+        "com.schoolclubs.management.app://oauth2redirect",
+        "http://localhost:8080/*"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "com.schoolclubs.management.app://oauth2redirect+"
+      }
+    }
+  ],
+  "eventsListeners": [
+    "webhook-http",
+    "jboss-logging"
+  ]
+}

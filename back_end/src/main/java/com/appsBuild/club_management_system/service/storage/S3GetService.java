@@ -22,12 +22,6 @@ public class S3GetService {
     this.s3Presigner = s3Presigner;
   }
 
-  /**
-   * Generate a presigned GET URL for any S3 object using its stored key.
-   *
-   * @param s3Key The full S3 object key
-   * @return Presigned URL (GET method)
-   */
   public String getPresignedUrl(String s3Key) {
     GetObjectRequest objectRequest =
         GetObjectRequest.builder().bucket(bucketName).key(s3Key).build();
