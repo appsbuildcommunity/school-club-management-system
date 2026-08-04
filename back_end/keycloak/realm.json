@@ -9,11 +9,20 @@
   "verifyEmail": true,
   "editUsernameAllowed": false,
   "sslRequired": "external",
+  "accessTokenLifespan": 180,
   "roles": {
     "realm": [
       {
         "name": "STUDENT",
         "description": "A registered student of the school community",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      },
+      {
+        "name": "USER",
+        "description": "A registered user",
         "composite": false,
         "clientRole": false,
         "containerId": "school_clubs_management_system",
@@ -31,7 +40,7 @@
     "client": {}
   },
   "defaultRoles": [
-    "STUDENT"
+    "USER"
   ],
   "clients": [
     {
@@ -56,6 +65,36 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "com.schoolclubs.management.app://oauth2redirect+"
       }
+    },
+    {
+      "clientId": "school_clubs_management_backend",
+      "name": "School Clubs Management Backend",
+      "description": "Spring Boot back end using the Keycloak Admin REST API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-backend-service-secret"
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-school_clubs_management_backend",
+      "enabled": true,
+      "serviceAccountClientId": "school_clubs_management_backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users"
+        ]
+      },
+      "realmRoles": [],
+      "notBefore": 0
     }
   ],
   "eventsListeners": [

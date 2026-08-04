@@ -118,7 +118,8 @@ interface Member {
 Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PKCE for the Flutter app). The back end is a pure **resource server**: every protected endpoint requires a valid JWT access token from Keycloak via the `Authorization: Bearer <token>` header.
 
 - The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
-- Authorities are derived from the token's `realm_access.roles` claim (e.g. `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
+- Authorities are derived from the token's `realm_access.roles` claim (e.g. `USER`, `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
+- A newly registered user gets the `USER` realm role (default). `STUDENT` and `ADMIN` are additional realm roles.
 - When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook `POST /api/webhooks/keycloak/user-registered` (HTTP Basic auth: `KEYCLOAK_WEBHOOK_USERNAME`/`KEYCLOAK_WEBHOOK_PASSWORD`), which creates/keeps the local `users` row in sync (Keycloak `sub` stored as `users.keycloak_sub`, unique). This endpoint is idempotent.
 - `POST /verify` remains public for the S3 upload-verification test flow.
 - Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
@@ -129,7 +130,7 @@ Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PK
 
 **Authorization:** Bearer token
 
-Returns the local profile of the authenticated user (looked up by the token's `sub` claim).
+Returns the local profile of the authenticated user (looked up by the token's `sub` claim), plus the roles present in the token's `realm_access.roles` claim.
 
 **Response:** `200 OK`
 
@@ -140,9 +141,43 @@ Returns the local profile of the authenticated user (looked up by the token's `s
   "email": "string",
   "firstName": "string",
   "lastName": "string",
-  "profilePictureUrl": "string | null"
+  "profilePictureUrl": "string | null",
+  "roles": ["USER"]
 }
 ```
+
+---
+
+### Update User Role
+
+**PATCH** `/api/users/{userId}/role`
+
+**Authorization:** `ADMIN` only (`hasRole('ADMIN')`)
+
+Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempotent: no-op if the user already has the target role).
+
+**Request Body:**
+
+```json
+{
+  "role": "STUDENT"
+}
+```
+
+`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` assignment stays in the Keycloak admin console.
+
+**Behavior:**
+
+- The change is made through the Keycloak Admin REST API using the `school_clubs_management_backend` service-account client.
+- No tokens are revoked and the user is **not** logged out. The realm uses a 180-second access-token lifetime, so the new role takes effect at the user's next token refresh (automatic, via the still-valid refresh token) — within ~3 minutes of the change.
+
+**Responses:**
+
+- `200 OK` — role updated
+- `400 Bad Request` — `role` is not `USER`/`STUDENT`
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller is not an `ADMIN`
+- `404 Not Found` — no user with that `userId`
 
 ---
 
