@@ -115,85 +115,51 @@ interface Member {
 
 ## Authentication
 
-All endpoints require JWT authentication via `Authorization: Bearer <token>` header unless marked as **Public**.
+Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PKCE for the Flutter app). The back end is a pure **resource server**: every protected endpoint requires a valid JWT access token from Keycloak via the `Authorization: Bearer <token>` header.
 
----
+- The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
+- Authorities are derived from the token's `realm_access.roles` claim (e.g. `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
+- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook `POST /api/webhooks/keycloak/user-registered` (HTTP Basic auth: `KEYCLOAK_WEBHOOK_USERNAME`/`KEYCLOAK_WEBHOOK_PASSWORD`), which creates/keeps the local `users` row in sync (Keycloak `sub` stored as `users.keycloak_sub`, unique). This endpoint is idempotent.
+- `POST /verify` remains public for the S3 upload-verification test flow.
+- Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
 
-## Authentication Endpoints
+### Current User
 
-### Register User
+**GET** `/api/users/me`
 
-**POST** `/api/auth/register`
+**Authorization:** Bearer token
 
-**Authorization:** Public
+Returns the local profile of the authenticated user (looked up by the token's `sub` claim).
 
-**Request Body:**
+**Response:** `200 OK`
 
 ```json
 {
+  "userId": 1,
+  "username": "string",
+  "email": "string",
   "firstName": "string",
   "lastName": "string",
-  "username": "string",
-  "email": "string",
-  "password": "string"
+  "profilePictureUrl": "string | null"
 }
 ```
 
-**Response:** `201 Created`
-
 ---
 
-### Verify User
+### Profile Picture Upload URL
 
-**POST** `/api/auth/verify`
+**GET** `/api/users/me/profile-picture/upload-url?name=<filename>`
 
-**Authorization:** Public
+**Authorization:** Bearer token
 
-**Query Parameters:**
-
-- `code` (string, required): Verification code sent via email
-
-**Response:** `200 OK`
-
----
-
-### Resend Verification Code
-
-**GET** `/api/auth/verify/resend`
-
-**Authorization:** Public
-
-**Query Parameters:**
-
-- `username` (string, required): Username to receive verification code
-
-**Response:** `200 OK`
-
----
-
-### Login
-
-**POST** `/api/auth/login`
-
-**Authorization:** Public
-
-**Request Body:**
-
-```json
-{
-  "identifier": "string", // username or email
-  "password": "string"
-}
-```
+Returns a presigned S3 `PUT` URL (and the object `key`) so the app can upload the authenticated user's profile picture directly.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "username": "string",
-  "email": "string",
-  "roles": UserRole,
-  "token": "string"
+  "uploadUrl": "string",
+  "key": "string"
 }
 ```
 

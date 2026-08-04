@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProfilePictureRepository extends JpaRepository<ProfilePicture, Long> {
 
-  Optional<ProfilePicture> findByUserId(Long profilePictureId);
+  Optional<ProfilePicture> findByUser_UserId(Long userId);
 
   Optional<ProfilePicture> findByS3Key(String oldKey);
 }
