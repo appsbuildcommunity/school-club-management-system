@@ -39,9 +39,7 @@
     ],
     "client": {}
   },
-  "defaultRoles": [
-    "USER"
-  ],
+  "defaultRoles": ["USER"],
   "clients": [
     {
       "clientId": "school_clubs_management_mobile_app",
@@ -59,8 +57,10 @@
       "frontchannelLogout": false,
       "redirectUris": [
         "com.schoolclubs.management.app://oauth2redirect",
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "http://localhost:5173/*"
       ],
+      "webOrigins": ["http://localhost:5173/*"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "com.schoolclubs.management.app://oauth2redirect+"
@@ -88,17 +88,11 @@
       "enabled": true,
       "serviceAccountClientId": "school_clubs_management_backend",
       "clientRoles": {
-        "realm-management": [
-          "manage-users",
-          "view-users"
-        ]
+        "realm-management": ["manage-users", "view-users", "view-realm"]
       },
       "realmRoles": [],
       "notBefore": 0
     }
   ],
-  "eventsListeners": [
-    "webhook-http",
-    "jboss-logging"
-  ]
+  "eventsListeners": ["webhook-http", "jboss-logging"]
 }

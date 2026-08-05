@@ -1,10 +1,10 @@
 package com.appsBuild.club_management_system.service.keycloak;
 
 import com.appsBuild.club_management_system.exception.ApplicationException;
-import com.fasterxml.jackson.databind.JsonNode;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -39,20 +39,19 @@ public class KeycloakAdminService {
 
   public void updateRealmRole(String keycloakSub, String targetRole) {
     String token = getAccessToken();
-    List<JsonNode> currentRoles = getRealmRoles(token, keycloakSub);
+    List<Map<String, Object>> currentRoles = getRealmRoles(token, keycloakSub);
 
     boolean alreadyTarget =
-        currentRoles.stream()
-            .anyMatch(role -> targetRole.equals(role.path("name").asText()));
+        currentRoles.stream().anyMatch(role -> targetRole.equals(role.get("name")));
     if (alreadyTarget) {
       return;
     }
 
-    List<JsonNode> rolesToRemove =
+    List<Map<String, Object>> rolesToRemove =
         currentRoles.stream()
             .filter(
                 role -> {
-                  String name = role.path("name").asText();
+                  Object name = role.get("name");
                   return USER_ROLE.equals(name) || STUDENT_ROLE.equals(name);
                 })
             .toList();
@@ -60,7 +59,10 @@ public class KeycloakAdminService {
       removeRealmRoles(token, keycloakSub, rolesToRemove);
     }
 
-    JsonNode targetRoleRepresentation = getRole(token, targetRole);
+    Map<String, Object> targetRoleRepresentation = getRole(token, targetRole);
+    if (targetRoleRepresentation == null) {
+      throw new ApplicationException("Keycloak role not found: " + targetRole);
+    }
     addRealmRole(token, keycloakSub, targetRoleRepresentation);
   }
 
@@ -70,47 +72,43 @@ public class KeycloakAdminService {
     form.add("client_id", adminClientId);
     form.add("client_secret", adminClientSecret);
 
-    JsonNode response =
+    Map<String, Object> response =
         postForJson(
             tokenEndpoint(),
             form,
             MediaType.APPLICATION_FORM_URLENCODED);
-    String accessToken = response.path("access_token").asText();
-    if (accessToken.isBlank()) {
+    String accessToken = (String) response.get("access_token");
+    if (accessToken == null || accessToken.isBlank()) {
       throw new ApplicationException("Failed to obtain a Keycloak admin access token");
     }
     return accessToken;
   }
 
-  private List<JsonNode> getRealmRoles(String token, String keycloakSub) {
+  private List<Map<String, Object>> getRealmRoles(String token, String keycloakSub) {
     try {
-      JsonNode response =
+      List<Map<String, Object>> roles =
           restClient
               .get()
               .uri(roleMappingsEndpoint(keycloakSub))
               .header("Authorization", bearer(token))
               .retrieve()
-              .body(JsonNode.class);
-      List<JsonNode> roles = new ArrayList<>();
-      if (response != null && response.isArray()) {
-        response.forEach(roles::add);
-      }
-      return roles;
+              .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+      return roles == null ? List.of() : roles;
     } catch (RestClientResponseException e) {
       throw new ApplicationException(
           "Failed to read Keycloak roles for user " + keycloakSub + ": " + e.getStatusCode());
     }
   }
 
-  private JsonNode getRole(String token, String roleName) {
+  private Map<String, Object> getRole(String token, String roleName) {
     try {
-      JsonNode response =
+      Map<String, Object> response =
           restClient
               .get()
               .uri(roleEndpoint(roleName))
               .header("Authorization", bearer(token))
               .retrieve()
-              .body(JsonNode.class);
+              .body(new ParameterizedTypeReference<Map<String, Object>>() {});
       if (response == null) {
         throw new ApplicationException("Keycloak role not found: " + roleName);
       }
@@ -121,7 +119,7 @@ public class KeycloakAdminService {
     }
   }
 
-  private void removeRealmRoles(String token, String keycloakSub, List<JsonNode> roles) {
+  private void removeRealmRoles(String token, String keycloakSub, List<Map<String, Object>> roles) {
     try {
       restClient
           .method(org.springframework.http.HttpMethod.DELETE)
@@ -137,7 +135,7 @@ public class KeycloakAdminService {
     }
   }
 
-  private void addRealmRole(String token, String keycloakSub, JsonNode role) {
+  private void addRealmRole(String token, String keycloakSub, Map<String, Object> role) {
     try {
       restClient
           .post()
@@ -153,16 +151,16 @@ public class KeycloakAdminService {
     }
   }
 
-  private JsonNode postForJson(String uri, Object body, MediaType contentType) {
+  private Map<String, Object> postForJson(String uri, Object body, MediaType contentType) {
     try {
-      JsonNode response =
+      Map<String, Object> response =
           restClient
               .post()
               .uri(uri)
               .contentType(contentType)
               .body(body)
               .retrieve()
-              .body(JsonNode.class);
+              .body(new ParameterizedTypeReference<Map<String, Object>>() {});
       if (response == null) {
         throw new ApplicationException("Empty response from " + uri);
       }

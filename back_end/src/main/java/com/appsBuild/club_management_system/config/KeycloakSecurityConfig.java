@@ -1,6 +1,7 @@
 package com.appsBuild.club_management_system.config;
 
 import com.appsBuild.club_management_system.security.KeycloakJwtAuthenticationConverter;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
@@ -33,6 +37,7 @@ public class KeycloakSecurityConfig {
   @Order(1)
   public SecurityFilterChain keycloakWebhookSecurityFilterChain(HttpSecurity http) throws Exception {
     http.securityMatcher("/api/webhooks/keycloak/**")
+        .cors(Customizer.withDefaults())
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
         .httpBasic(Customizer.withDefaults());
@@ -42,7 +47,8 @@ public class KeycloakSecurityConfig {
   @Bean
   @Order(2)
   public SecurityFilterChain resourceServerSecurityFilterChain(HttpSecurity http) throws Exception {
-    http.csrf(AbstractHttpConfigurer::disable)
+    http.cors(Customizer.withDefaults())
+        .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -68,5 +74,17 @@ public class KeycloakSecurityConfig {
             .authorities("WEBHOOK")
             .build();
     return new InMemoryUserDetailsManager(webhookUser);
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(false);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 }
