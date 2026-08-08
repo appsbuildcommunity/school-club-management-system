@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.dto.s3Services.response.UploadDtoResponse;
+import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import com.appsBuild.club_management_system.dto.user.UpdateRoleRequest;
 import com.appsBuild.club_management_system.dto.user.UserMeResponse;
 import com.appsBuild.club_management_system.exception.ApplicationException;
@@ -59,10 +59,10 @@ public class UserController {
   }
 
   @GetMapping("/me/profile-picture/upload-url")
-  public ResponseEntity<UploadDtoResponse> profilePictureUploadUrl(
+  public ResponseEntity<S3UploadResponse> profilePictureUploadUrl(
       @RequestParam String name, @AuthenticationPrincipal Jwt jwt) {
     User user = currentUser(jwt);
-    UploadDtoResponse response =
+    S3UploadResponse response =
         s3PutService.getUploadUserProfilePicturePresignedUrl(user.getUserId(), name);
     return ResponseEntity.ok(response);
   }

@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.service.storage;
 
-import com.appsBuild.club_management_system.dto.s3Services.response.UploadDtoResponse;
+import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import java.time.Duration;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,21 +26,21 @@ public class S3PutService {
 
   private static final Duration PRESIGNED_URL_EXPIRATION = Duration.ofMinutes(5);
 
-  public UploadDtoResponse getUploadUserProfilePicturePresignedUrl(
+  public S3UploadResponse getUploadUserProfilePicturePresignedUrl(
       Long userId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key = String.format("users/%d/%s.%s", userId, UUID.randomUUID(), extension);
     return buildResponse(key, originalFilename);
   }
 
-  public UploadDtoResponse getUploadClubProfilePicturePresignedUrl(
+  public S3UploadResponse getUploadClubProfilePicturePresignedUrl(
       Long clubId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key = String.format("clubs/%d/%s.%s", clubId, UUID.randomUUID(), extension);
     return buildResponse(key, originalFilename);
   }
 
-  public UploadDtoResponse getUploadEventAttachmentPresignedUrl(
+  public S3UploadResponse getUploadEventAttachmentPresignedUrl(
       Long clubId, Long eventId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key =
@@ -48,7 +48,7 @@ public class S3PutService {
     return buildResponse(key, originalFilename);
   }
 
-  public UploadDtoResponse getUploadPostAttachmentPresignedUrl(
+  public S3UploadResponse getUploadPostAttachmentPresignedUrl(
       Long clubId, Long postId, String originalFilename) {
     String extension = getFileExtension(originalFilename);
     String key =
@@ -56,10 +56,10 @@ public class S3PutService {
     return buildResponse(key, originalFilename);
   }
 
-  private UploadDtoResponse buildResponse(String key, String originalFilename) {
+  private S3UploadResponse buildResponse(String key, String originalFilename) {
     String contentType = getContentType(originalFilename);
     String uploadUrl = generatePresignedUrl(key, contentType);
-    return new UploadDtoResponse(uploadUrl, key);
+    return new S3UploadResponse(uploadUrl, key);
   }
 
   private String generatePresignedUrl(String key, String contentType) {

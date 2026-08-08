@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.dto.s3Services.response.UploadDtoResponse;
+import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import com.appsBuild.club_management_system.service.storage.S3PutService;
 import com.appsBuild.club_management_system.service.storage.S3UploadVerificationService;
 
@@ -24,8 +24,8 @@ public class TestController {
 
   @GetMapping("/upload-profile-pic")
   @ResponseBody
-  public ResponseEntity<UploadDtoResponse> getUploadUrl(@RequestParam Long userId, @RequestParam String name) {
-    UploadDtoResponse presignedUrl = s3StorageService.getUploadUserProfilePicturePresignedUrl(userId, name);
+  public ResponseEntity<S3UploadResponse> getUploadUrl(@RequestParam Long userId, @RequestParam String name) {
+    S3UploadResponse presignedUrl = s3StorageService.getUploadUserProfilePicturePresignedUrl(userId, name);
     return ResponseEntity.ok(presignedUrl);
   }
   @PostMapping("/verify")
