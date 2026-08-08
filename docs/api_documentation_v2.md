@@ -1031,9 +1031,11 @@ File uploads follow a **two-step presigned URL flow**:
 ```json
 {
   "uploadUrl": "string",
-  "key": "string"
+  "key": "users/{userId}/{uuid}.{ext}"
 }
 ```
+
+**S3 key pattern:** `users/{userId}/{uuid}.{ext}`
 
 ---
 
@@ -1052,11 +1054,11 @@ File uploads follow a **two-step presigned URL flow**:
 ```json
 {
   "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
-  "key": "clubs/{clubId}/profile_picture.{ext}"
+  "key": "clubs/{clubId}/{uuid}.{ext}"
 }
 ```
 
-**S3 key pattern:** `clubs/{clubId}/profile_picture.{ext}`
+**S3 key pattern:** `clubs/{clubId}/{uuid}.{ext}`
 
 ---
 
@@ -1160,6 +1162,8 @@ Returns a short-lived presigned GET URL for any stored S3 object. Use the `key` 
 }
 ```
 
+`newKey` follows the upload key pattern: `users/{userId}/{uuid}.{ext}`
+
 ---
 
 ### Get Presigned URL — Update Club Profile Picture
@@ -1181,6 +1185,8 @@ Returns a short-lived presigned GET URL for any stored S3 object. Use the `key` 
   "newKey": "string"
 }
 ```
+
+`newKey` follows the upload key pattern: `clubs/{clubId}/{uuid}.{ext}`
 
 ---
 

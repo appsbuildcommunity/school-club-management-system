@@ -8,8 +8,8 @@ import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.repository.UserRepository;
 import com.appsBuild.club_management_system.service.keycloak.KeycloakAdminService;
-import com.appsBuild.club_management_system.service.storage.S3GetService;
-import com.appsBuild.club_management_system.service.storage.S3PutService;
+import com.appsBuild.club_management_system.service.storage.ProfilePictureService;
+import com.appsBuild.club_management_system.service.storage.S3ObjectStorageService;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +34,8 @@ public class UserController {
   private static final Set<String> ASSIGNABLE_ROLES = Set.of("USER", "STUDENT");
 
   private final UserRepository userRepository;
-  private final S3GetService s3GetService;
-  private final S3PutService s3PutService;
+  private final S3ObjectStorageService s3ObjectStorageService;
+  private final ProfilePictureService profilePictureService;
   private final KeycloakAdminService keycloakAdminService;
 
   @GetMapping("/me")
@@ -44,7 +44,7 @@ public class UserController {
 
     String profilePictureUrl = null;
     if (user.getProfilePicture() != null && user.getProfilePicture().getS3Key() != null) {
-      profilePictureUrl = s3GetService.getPresignedUrl(user.getProfilePicture().getS3Key());
+      profilePictureUrl = s3ObjectStorageService.presignGetUrl(user.getProfilePicture().getS3Key());
     }
 
     return ResponseEntity.ok(
@@ -63,7 +63,7 @@ public class UserController {
       @RequestParam String name, @AuthenticationPrincipal Jwt jwt) {
     User user = currentUser(jwt);
     S3UploadResponse response =
-        s3PutService.getUploadUserProfilePicturePresignedUrl(user.getUserId(), name);
+        profilePictureService.requestUserProfilePictureUpload(user.getUserId(), name);
     return ResponseEntity.ok(response);
   }
 
