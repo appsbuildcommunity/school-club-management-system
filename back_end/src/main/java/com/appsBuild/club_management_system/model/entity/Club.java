@@ -37,6 +37,9 @@ public class Club {
   @Column(name = "description", nullable = true, length = 1000)
   private String description;
 
+  @Column(name = "is_coordination_club", nullable = false)
+  private boolean isCoordinationClub;
+
   @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<ClubMembership> memberships;
 
