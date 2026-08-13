@@ -3,13 +3,9 @@ package com.appsBuild.club_management_system.model.entity;
 import java.util.Date;
 import java.util.List;
 
-import com.appsBuild.club_management_system.model.enums.Role;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -47,24 +43,11 @@ public class User {
   @Column(name = "email", nullable = false, unique = true, length = 100)
   private String email;
 
-  @Column(name = "password", nullable = false, length = 255)
-  private String password;
+  @Column(name = "keycloak_sub", nullable = false, unique = true, length = 100)
+  private String keycloakSub;
 
   @Column(name = "created_at", nullable = false)
   private Date createdAt;
-
-  @Column(name = "verified", nullable = false)
-  private boolean verified;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "role", nullable = false, length = 20)
-  private Role role;
-
-  @Column(name = "student_id", nullable = true, unique = true, length = 50)
-  private String studentId;
-
-  @Column(name = "admin_id", nullable = true, unique = true, length = 50)
-  private String adminId;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<ClubMembershipHistory> membershipHistory;

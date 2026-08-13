@@ -1,0 +1,98 @@
+{
+  "realm": "school_clubs_management_system",
+  "displayName": "School Clubs Management System",
+  "enabled": true,
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": true,
+  "editUsernameAllowed": false,
+  "sslRequired": "external",
+  "accessTokenLifespan": 180,
+  "roles": {
+    "realm": [
+      {
+        "name": "STUDENT",
+        "description": "A registered student of the school community",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      },
+      {
+        "name": "USER",
+        "description": "A registered user",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      },
+      {
+        "name": "ADMIN",
+        "description": "A user with administrative privileges",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "school_clubs_management_system",
+        "attributes": {}
+      }
+    ],
+    "client": {}
+  },
+  "defaultRoles": ["USER"],
+  "clients": [
+    {
+      "clientId": "school_clubs_management_mobile_app",
+      "name": "School Clubs Management Mobile App",
+      "description": "Flutter mobile application for the school club management system",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "frontchannelLogout": false,
+      "redirectUris": [
+        "com.schoolclubs.management.app://oauth2redirect",
+        "http://localhost:8080/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": ["http://localhost:5173/*"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "com.schoolclubs.management.app://oauth2redirect+"
+      }
+    },
+    {
+      "clientId": "school_clubs_management_backend",
+      "name": "School Clubs Management Backend",
+      "description": "Spring Boot back end using the Keycloak Admin REST API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-backend-service-secret"
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-school_clubs_management_backend",
+      "enabled": true,
+      "serviceAccountClientId": "school_clubs_management_backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users", "view-realm"]
+      },
+      "realmRoles": [],
+      "notBefore": 0
+    }
+  ],
+  "eventsListeners": ["webhook-http", "jboss-logging"]
+}

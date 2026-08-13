@@ -12,6 +12,32 @@ services:
       POSTGRES_USER: ${DB_USER_NAME}
     volumes:
       - ~/.school_clubs_management_system_db_data/:/var/lib/postgresql/18/data/
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+
+  keycloak:
+    build: ./keycloak
+    container_name: school-clubs-management-system-keycloak
+    ports:
+      - '${KEYCLOAK_PORT:-8082}:8080'
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: ${DB_USER_NAME}
+      KC_DB_PASSWORD: ${DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      WEBHOOK_HTTP_BASE_PATH: ${KEYCLOAK_WEBHOOK_BASE_PATH}
+      WEBHOOK_HTTP_AUTH_USERNAME: ${KEYCLOAK_WEBHOOK_USERNAME}
+      WEBHOOK_HTTP_AUTH_PASSWORD: ${KEYCLOAK_WEBHOOK_PASSWORD}
+      WEBHOOK_EVENTS_TAKEN: REGISTER
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    command: start-dev --import-realm
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - db
     restart: unless-stopped
 
   minio:

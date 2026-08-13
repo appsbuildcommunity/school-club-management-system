@@ -115,85 +115,86 @@ interface Member {
 
 ## Authentication
 
-All endpoints require JWT authentication via `Authorization: Bearer <token>` header unless marked as **Public**.
+Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PKCE for the Flutter app). The back end is a pure **resource server**: every protected endpoint requires a valid JWT access token from Keycloak via the `Authorization: Bearer <token>` header.
 
----
+- The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
+- Authorities are derived from the token's `realm_access.roles` claim (e.g. `USER`, `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
+- A newly registered user gets the `USER` realm role (default). `STUDENT` and `ADMIN` are additional realm roles.
+- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook `POST /api/webhooks/keycloak/user-registered` (HTTP Basic auth: `KEYCLOAK_WEBHOOK_USERNAME`/`KEYCLOAK_WEBHOOK_PASSWORD`), which creates/keeps the local `users` row in sync (Keycloak `sub` stored as `users.keycloak_sub`, unique). This endpoint is idempotent.
+- `POST /verify` remains public for the S3 upload-verification test flow.
+- Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
 
-## Authentication Endpoints
+### Current User
 
-### Register User
+**GET** `/api/users/me`
 
-**POST** `/api/auth/register`
+**Authorization:** Bearer token
 
-**Authorization:** Public
+Returns the local profile of the authenticated user (looked up by the token's `sub` claim), plus the roles present in the token's `realm_access.roles` claim.
 
-**Request Body:**
+**Response:** `200 OK`
 
 ```json
 {
+  "userId": 1,
+  "username": "string",
+  "email": "string",
   "firstName": "string",
   "lastName": "string",
-  "username": "string",
-  "email": "string",
-  "password": "string"
+  "profilePictureUrl": "string | null",
+  "roles": ["USER"]
 }
 ```
 
-**Response:** `201 Created`
-
 ---
 
-### Verify User
+### Update User Role
 
-**POST** `/api/auth/verify`
+**PATCH** `/api/users/{userId}/role`
 
-**Authorization:** Public
+**Authorization:** `ADMIN` only (`hasRole('ADMIN')`)
 
-**Query Parameters:**
-
-- `code` (string, required): Verification code sent via email
-
-**Response:** `200 OK`
-
----
-
-### Resend Verification Code
-
-**GET** `/api/auth/verify/resend`
-
-**Authorization:** Public
-
-**Query Parameters:**
-
-- `username` (string, required): Username to receive verification code
-
-**Response:** `200 OK`
-
----
-
-### Login
-
-**POST** `/api/auth/login`
-
-**Authorization:** Public
+Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempotent: no-op if the user already has the target role).
 
 **Request Body:**
 
 ```json
 {
-  "identifier": "string", // username or email
-  "password": "string"
+  "role": "STUDENT"
 }
 ```
+
+`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` assignment stays in the Keycloak admin console.
+
+**Behavior:**
+
+- The change is made through the Keycloak Admin REST API using the `school_clubs_management_backend` service-account client.
+- No tokens are revoked and the user is **not** logged out. The realm uses a 180-second access-token lifetime, so the new role takes effect at the user's next token refresh (automatic, via the still-valid refresh token) — within ~3 minutes of the change.
+
+**Responses:**
+
+- `200 OK` — role updated
+- `400 Bad Request` — `role` is not `USER`/`STUDENT`
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller is not an `ADMIN`
+- `404 Not Found` — no user with that `userId`
+
+---
+
+### Profile Picture Upload URL
+
+**GET** `/api/users/me/profile-picture/upload-url?name=<filename>`
+
+**Authorization:** Bearer token
+
+Returns a presigned S3 `PUT` URL (and the object `key`) so the app can upload the authenticated user's profile picture directly.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "username": "string",
-  "email": "string",
-  "roles": UserRole,
-  "token": "string"
+  "uploadUrl": "string",
+  "key": "string"
 }
 ```
 
@@ -830,6 +831,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 **Response:** `204 No Content`
 
 ---
+
 ### Hide Event
 
 **PUT** `/api/events/{eventId}/hide`
@@ -879,7 +881,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **POST** `/api/events/{eventId}/book`
 
-**Authorization:** USER 
+**Authorization:** USER
 
 **Response:** `201 Created`
 
@@ -889,7 +891,7 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 **DELETE** `/api/events/{eventId}/book/me`
 
-**Authorization:** USER 
+**Authorization:** USER
 
 **Response:** `204 No Content`
 
@@ -1004,6 +1006,281 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 
 ---
 
+## Storage Endpoints
+
+File uploads follow a **two-step presigned URL flow**:
+
+1. **Request a presigned PUT URL** — call the appropriate endpoint below to get a short-lived upload URL and an S3 object key.
+2. **Upload directly to S3** — `PUT` the file to the returned `uploadUrl` with the matching `Content-Type` header. No auth header is needed for this request; the presigned URL is self-authenticating.
+3. **Confirm the upload** — call the verify endpoint with the returned `key` so the backend can validate the upload and persist the reference.
+
+---
+
+### Get Presigned URL — User Profile Picture
+
+**GET** `/api/storage/upload/users/{userId}/profile-picture`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user matching `userId`
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `avatar.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "key": "users/{userId}/{uuid}.{ext}"
+}
+```
+
+**S3 key pattern:** `users/{userId}/{uuid}.{ext}`
+
+---
+
+### Get Presigned URL — Club Profile Picture
+
+**GET** `/api/storage/upload/clubs/{clubId}/profile-picture`
+
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `logo.jpg`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "clubs/{clubId}/{uuid}.{ext}"
+}
+```
+
+**S3 key pattern:** `clubs/{clubId}/{uuid}.{ext}`
+
+---
+
+### Get Presigned URL — Event Attachment
+
+**GET** `/api/storage/upload/clubs/{clubId}/events/{eventId}/attachments`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `schedule.pdf`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "string"
+}
+```
+
+---
+
+### Get Presigned URL — Post Attachment
+
+**GET** `/api/storage/upload/clubs/{clubId}/posts/{postId}/attachments`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): Original filename including extension (e.g. `flyer.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string", // Presigned S3 PUT URL (expires in 5 minutes)
+  "key": "string"
+}
+```
+
+---
+
+### Confirm Upload
+
+**POST** `/api/storage/verify`
+
+Must be called after the file has been successfully PUT to S3. The backend checks that the object exists, then associates it with the correct entity (user, club, event, or post) based on the key pattern. If the associated entity is not found, the orphaned S3 object is automatically deleted.
+
+**Authorization:** Authenticated (same role requirements as the corresponding upload endpoint)
+
+**Query Parameters:**
+
+- `key` (string, required): The S3 object key returned by the presigned URL endpoint
+
+**Response:** `200 OK` — upload confirmed and record saved
+
+**Response:** `404 Not Found` — object not found in S3 (upload may not have completed)
+
+---
+
+### Get Presigned Download URL
+
+**GET** `/api/storage/download`
+
+Returns a short-lived presigned GET URL for any stored S3 object. Use the `key` values returned from entity responses (e.g. `profilePicture.url` contains the key, or use the `url` field on `Attachment`).
+
+**Authorization:** Authenticated; access is subject to the visibility rules of the resource the object belongs to
+
+**Query Parameters:**
+
+- `key` (string, required): The full S3 object key
+
+**Response:** `200 OK`
+
+```json
+{
+  "url": "string"
+}
+```
+
+### Get Presigned URL — Update User Profile Picture
+
+**GET** `/api/storage/update/users/{userId}/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user matching `userId`
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension (e.g. `avatar.png`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+`newKey` follows the upload key pattern: `users/{userId}/{uuid}.{ext}`
+
+---
+
+### Get Presigned URL — Update Club Profile Picture
+
+**GET** `/api/storage/update/clubs/{clubId}/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension (e.g. `logo.jpg`)
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+`newKey` follows the upload key pattern: `clubs/{clubId}/{uuid}.{ext}`
+
+---
+
+### Get Presigned URL — Update Event Attachment
+
+**GET** `/api/storage/update/clubs/{clubId}/events/{eventId}/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_EVENTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+---
+
+### Get Presigned URL — Update Post Attachment
+
+**GET** `/api/storage/update/clubs/{clubId}/posts/{postId}/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS privilege)
+
+**Query Parameters:**
+
+- `filename` (string, required): New filename including extension
+
+**Response:** `200 OK`
+
+```json
+{
+  "uploadUrl": "string",
+  "oldKey": "string",
+  "newKey": "string"
+}
+```
+
+---
+
+### Confirm Update
+
+**POST** `/api/storage/verify/update`
+
+Must be called after the new file has been successfully PUT to S3. The backend verifies the new object exists, updates the S3 key in the DB, and deletes the old object from S3. If the new object is not found, nothing is changed.
+
+**Authorization:** Authenticated (same role requirements as the corresponding update endpoint)
+
+**Query Parameters:**
+
+- `oldKey` (string, required): The old S3 object key returned by the update presigned URL endpoint
+- `newKey` (string, required): The new S3 object key returned by the update presigned URL endpoint
+
+**Response:** `200 OK` — update confirmed, record updated, old object deleted
+
+**Response:** `404 Not Found` — new object not found in S3 (upload may not have completed)
+
+---
+
+### Delete Attachment
+
+**DELETE** `/api/storage/attachments/{attachmentId}`
+
+**Authorization:** CLUB_PRESIDENT, ASSISTANT_MEMBER (with MANAGE_POSTS or MANAGE_EVENTS privilege)
+
+**Response:** `204 No Content`
+
+---
+
+### Delete User Profile Picture
+
+**DELETE** `/api/storage/users/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUBS_RESPONSIBLE, or the authenticated user owning the profile picture
+
+**Response:** `204 No Content`
+
+---
+
+### Delete Club Profile Picture
+
+**DELETE** `/api/storage/clubs/profile-picture/{profilePictureId}`
+
+**Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
+
+## **Response:** `204 No Content`
+
 ## Common Response Codes
 
 - `200 OK` - Successful GET/PUT request
@@ -1040,4 +1317,5 @@ All endpoints require JWT authentication via `Authorization: Bearer <token>` hea
 4. **Visibility Levels**: PUBLIC < STUDENTS_ONLY < MEMBERS_ONLY
 5. **Assistant Privileges**: Customizable per club
 6. **Public Endpoints**: Also accessible at `/api/public/*` routes (e.g., `/api/public/posts`)
-7. **File Uploads**: Actual implementation format (multipart/form-data, base64, etc.) depends on backend implementation
+7. **File Uploads**: All file uploads use a presigned S3 URL flow — request a PUT URL via `/api/storage/upload/*`, upload directly to S3, then confirm via `POST /api/storage/verify`. See the **Storage Endpoints** section for full details.
+8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**.
