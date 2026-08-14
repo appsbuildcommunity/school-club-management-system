@@ -23,8 +23,8 @@ public class RoleGrant {
   private Long roleGrantId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "club_role_id", nullable = true)
-  private ClubRole clubRole;
+  @JoinColumn(name = "club_profile_id", nullable = true)
+  private ClubProfile clubProfile;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "assistant_member_privilege_id", nullable = false)

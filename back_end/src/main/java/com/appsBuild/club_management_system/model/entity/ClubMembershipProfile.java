@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ClubMembershipRole {
+public class ClubMembershipProfile {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -30,8 +30,8 @@ public class ClubMembershipRole {
   private ClubMembership clubMembership;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "club_role_id", nullable = false)
-  private ClubRole clubRole;
+  @JoinColumn(name = "club_profile_id", nullable = false)
+  private ClubProfile clubProfile;
 
   @Column(name = "assigned_date", nullable = false)
   private Date assignedDate;

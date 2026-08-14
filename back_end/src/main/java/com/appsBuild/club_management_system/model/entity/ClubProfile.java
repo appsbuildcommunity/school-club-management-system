@@ -23,10 +23,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ClubRole {
+public class ClubProfile {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long clubRoleId;
+  private Long clubProfileId;
 
   @Column(name = "name", nullable = false, length = 100)
   private String name;
@@ -40,8 +40,8 @@ public class ClubRole {
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
-      name = "club_role_endpoints",
-      joinColumns = @JoinColumn(name = "club_role_id"),
+      name = "club_profile_endpoints",
+      joinColumns = @JoinColumn(name = "club_profile_id"),
       inverseJoinColumns = @JoinColumn(name = "endpoint_id"))
   private List<Endpoint> endpoints;
 }

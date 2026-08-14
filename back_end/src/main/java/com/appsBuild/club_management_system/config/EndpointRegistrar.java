@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.config;
 
-import com.appsBuild.club_management_system.annotation.ClubEndpoint;
+import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.entity.Endpoint;
 import com.appsBuild.club_management_system.repository.EndpointRepository;
 import java.lang.reflect.Method;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Registers every {@code @ClubEndpoint}-annotated method as an {@link Endpoint} row.
+ * Registers every {@code @GrantableEndpoint}-annotated method as an {@link Endpoint} row.
  *
  * <p>Upsert-only: existing rows are refreshed from the annotation, but rows whose
  * annotation disappeared from the code are left untouched (no pruning).
@@ -34,7 +34,7 @@ public class EndpointRegistrar implements ApplicationRunner {
     for (Object bean : context.getBeansWithAnnotation(RestController.class).values()) {
       Class<?> targetClass = AopUtils.getTargetClass(bean);
       for (Method method : targetClass.getDeclaredMethods()) {
-        ClubEndpoint annotation = method.getAnnotation(ClubEndpoint.class);
+        GrantableEndpoint annotation = method.getAnnotation(GrantableEndpoint.class);
         if (annotation == null) {
           continue;
         }
@@ -43,7 +43,7 @@ public class EndpointRegistrar implements ApplicationRunner {
     }
   }
 
-  private void upsert(ClubEndpoint annotation) {
+  private void upsert(GrantableEndpoint annotation) {
     Optional<Endpoint> existing = endpointRepository.findByName(annotation.name());
     if (existing.isPresent()) {
       Endpoint endpoint = existing.get();
