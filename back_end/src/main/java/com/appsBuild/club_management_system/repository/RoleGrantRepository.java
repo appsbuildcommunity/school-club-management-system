@@ -27,4 +27,10 @@ public interface RoleGrantRepository extends JpaRepository<RoleGrant, Long> {
   // Deletes the links between the member's grants and the profile (called when a profile is unassigned).
   void deleteByGrant_ClubMembership_MembershipIdAndClubProfile_ClubProfileId(
       Long membershipId, Long profileId);
+
+  // Lists all links belonging to the given grant (used for orphan detection after link removal).
+  List<RoleGrant> findByGrant_PrivilegeId(Long privilegeId);
+
+  // Returns true if the given grant has at least one individual (null-profile) link.
+  boolean existsByGrant_PrivilegeIdAndClubProfileIsNull(Long privilegeId);
 }

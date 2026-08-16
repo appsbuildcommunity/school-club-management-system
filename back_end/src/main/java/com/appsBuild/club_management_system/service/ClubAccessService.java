@@ -100,6 +100,13 @@ public class ClubAccessService {
     return isPresidentOfClub(jwt, coordinationClubId());
   }
 
+  /** True if the caller has any membership in the given club (used by view-only endpoints). */
+  public boolean hasMembership(Jwt jwt, Long clubId) {
+    return clubMembershipRepository
+        .findByUser_UserIdAndClub_ClubId(currentUser(jwt).getUserId(), clubId)
+        .isPresent();
+  }
+
   private Endpoint resolveEndpoint(String endpointName) {
     return endpointRepository
         .findByName(endpointName)
