@@ -10,12 +10,13 @@ CREATE TABLE users
     email              VARCHAR(100) NOT NULL,
     keycloak_sub       VARCHAR(100) NOT NULL,
     created_at         TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    profile_picture_id VARCHAR(255),
+    profile_picture_id BIGINT ,
 
     CONSTRAINT uq_users_username UNIQUE (username),
     CONSTRAINT uq_users_email UNIQUE (email),
-    CONSTRAINT uq_users_keycloak_sub UNIQUE (keycloak_sub)
-    );
+    CONSTRAINT uq_users_keycloak_sub UNIQUE (keycloak_sub),
+    CONSTRAINT fk_profile_picture_user FOREIGN KEY (profile_picture_id) REFERENCES profile_picture (profile_picture_id)
+);
 
 -- rollback DROP TABLE users;
 

@@ -7,9 +7,10 @@ CREATE TABLE club
     club_name          VARCHAR(100) NOT NULL,
     club_full_name     VARCHAR(200),
     description        VARCHAR(1000),
-    profile_picture_id VARCHAR(255),
+    profile_picture_id BIGINT,
 
-    CONSTRAINT uq_club_name UNIQUE (club_name)
+    CONSTRAINT uq_club_name UNIQUE (club_name),
+    CONSTRAINT fk_profile_picture_club FOREIGN KEY (profile_picture_id) REFERENCES profile_picture (profile_picture_id)
 );
 
 -- rollback DROP TABLE club;
