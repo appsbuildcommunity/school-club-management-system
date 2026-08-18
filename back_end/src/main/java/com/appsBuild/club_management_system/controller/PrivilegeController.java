@@ -7,11 +7,8 @@ import com.appsBuild.club_management_system.dto.club.ClubProfileResponse;
 import com.appsBuild.club_management_system.dto.privilege.MemberPrivilegesResponse;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.service.ClubProfileService;
-
 import java.util.List;
-
 import lombok.AllArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -137,7 +134,10 @@ public class PrivilegeController {
   // ── View ────────────────────────────────────────────────────────────
 
   @GetMapping("/members/{membershipId}/privileges")
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasCategoryPrivilege(#jwt, #clubId, T(com.appsBuild.club_management_system.model.enums.Category).MANAGE_MEMBERS) or @clubAccess.isMembershipOwner(#jwt, #membershipId)")
+  @PreAuthorize(
+      "hasRole('ADMIN') or @clubAccess.hasCategoryPrivilege(#jwt, #clubId,"
+          + " T(com.appsBuild.club_management_system.model.enums.Category).MANAGE_MEMBERS) or"
+          + " @clubAccess.isMembershipOwner(#jwt, #membershipId)")
   public ResponseEntity<MemberPrivilegesResponse> getMemberPrivileges(
       @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,

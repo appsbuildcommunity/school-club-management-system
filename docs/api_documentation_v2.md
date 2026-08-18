@@ -42,6 +42,13 @@ enum Privilege {
   MANAGE_EVENTS = 'MANAGE_EVENTS',
   MANAGE_MEMBERS = 'MANAGE_MEMBERS',
 }
+
+enum Category {
+  MANAGE_POSTS = 'MANAGE_POSTS',
+  MANAGE_EVENTS = 'MANAGE_EVENTS',
+  MANAGE_MEMBERS = 'MANAGE_MEMBERS',
+  MANAGE_CLUBS = 'MANAGE_CLUBS',
+}
 ```
 
 ### Common Structures
@@ -109,6 +116,50 @@ interface Member {
   role: ClubRole
   roleDescription?: string
 }
+
+// Endpoint (grantable API capability)
+interface EndpointResponse {
+  name: string          // unique identifier, e.g. "manage_profiles"
+  description: string   // human-readable description
+  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS
+  privileged: boolean   // true only for MANAGE_CLUBS (admin-only endpoints)
+}
+
+// Club Profile (role template grouping multiple endpoints)
+interface ClubProfileRequest {
+  name: string            // profile name
+  endpoints: string[]     // list of endpoint names included in this profile
+}
+
+interface ClubProfileResponse {
+  profileId: number
+  name: string
+  endpoints: string[]     // list of endpoint names included in this profile
+}
+
+// Privilege Assignment
+interface AssignPrivilegesRequest {
+  profileId?: number | null   // if set, grant all endpoints from this profile
+  endpoints?: string[] | null // if profileId is null, grant these individual endpoints
+}
+
+// Member Privileges View
+interface MemberPrivilegesResponse {
+  membershipId: number
+  privileges: MemberPrivilege[]
+}
+
+interface MemberPrivilege {
+  privilegeId: number
+  endpointName: string      // e.g. "manage_profiles"
+  grantedDate: string       // ISO 8601 date
+  sources: SourceProfile[]  // which profiles this privilege came from (empty = individual grant)
+}
+
+interface SourceProfile {
+  profileId: number
+  name: string
+}
 ```
 
 ---
@@ -120,7 +171,7 @@ Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PK
 - The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
 - Authorities are derived from the token's `realm_access.roles` claim (e.g. `USER`, `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
 - A newly registered user gets the `USER` realm role (default). `STUDENT` and `ADMIN` are additional realm roles.
-- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook `POST /api/webhooks/keycloak/user-registered` (HTTP Basic auth: `KEYCLOAK_WEBHOOK_USERNAME`/`KEYCLOAK_WEBHOOK_PASSWORD`), which creates/keeps the local `users` row in sync (Keycloak `sub` stored as `users.keycloak_sub`, unique). This endpoint is idempotent.
+- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook (see **Keycloak Webhook** section below). This endpoint is idempotent.
 - `POST /verify` remains public for the S3 upload-verification test flow.
 - Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
 
@@ -197,6 +248,50 @@ Returns a presigned S3 `PUT` URL (and the object `key`) so the app can upload th
   "key": "string"
 }
 ```
+
+---
+
+## Keycloak Webhook
+
+### User Registered Webhook
+
+**POST** `/api/webhooks/keycloak/user-registered`
+
+**Authorization:** HTTP Basic Auth (`KEYCLOAK_WEBHOOK_USERNAME` / `KEYCLOAK_WEBHOOK_PASSWORD`)
+
+Called by Keycloak when a new user completes registration. Creates or syncs the local `users` row (Keycloak `sub` stored as `users.keycloak_sub`, unique). Idempotent — no-op if the user already exists.
+
+**Request Body:**
+
+```json
+{
+  "type": "REGISTER",
+  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "details": {
+    "username": "johndoe",
+    "email": "john@example.com",
+    "first_name": "John",
+    "last_name": "Doe"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Event type (`REGISTER`) |
+| `userId` | string | Keycloak user `sub` claim |
+| `details.username` | string | Keycloak username |
+| `details.email` | string | User email |
+| `details.first_name` | string | First name (note: underscore-separated in webhook payload) |
+| `details.last_name` | string | Last name (note: underscore-separated in webhook payload) |
+
+**Response:** `204 No Content`
+
+**Response Codes:**
+
+- `204 No Content` — user created or already exists (idempotent)
+- `401 Unauthorized` — invalid Basic Auth credentials
+- `400 Bad Request` — malformed event payload
 
 ---
 
@@ -1280,6 +1375,355 @@ Must be called after the new file has been successfully PUT to S3. The backend v
 **Authorization:** CLUB_PRESIDENT, CLUBS_RESPONSIBLE
 
 ## **Response:** `204 No Content`
+
+---
+
+## Endpoint Registry
+
+The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@GrantableEndpoint` annotation. This section exposes that registry.
+
+### List All Grantable Endpoints
+
+**GET** `/api/endpoints`
+
+**Authorization:** Bearer token
+
+Returns all grantable endpoints. Admins and coordination-club presidents see the full list including privileged endpoints (`MANAGE_CLUBS`). Regular members see only non-privileged endpoints.
+
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "name": "manage_profiles",
+    "description": "Manage role profiles for a club",
+    "category": "MANAGE_MEMBERS",
+    "privileged": false
+  },
+  {
+    "name": "assign_profile",
+    "description": "Assign a profile or individual privileges to a member",
+    "category": "MANAGE_MEMBERS",
+    "privileged": false
+  },
+  {
+    "name": "manage_club_settings",
+    "description": "Manage club settings and coordination club status",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  }
+]
+```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
+
+---
+
+## Privilege Management
+
+These endpoints manage **club profiles** (role templates that group multiple grantable endpoints) and the **assignment/revocation** of those privileges to individual club members.
+
+**Base path:** `/api/clubs/{clubId}`
+
+### Permission Model
+
+- **Profile CRUD** (`manage_profiles`): Requires `ADMIN` role or the `manage_profiles` grantable endpoint on the club.
+- **Privilege Assignment** (`assign_profile`): Requires `ADMIN` role or the `assign_profile` grantable endpoint.
+- **Privilege Unassignment** (`unassign_profile`): Requires `ADMIN` role or the `unassign_profile` grantable endpoint.
+- **Privilege Revocation** (`revoke_privilege`): Requires `ADMIN` role or the `revoke_privilege` grantable endpoint.
+- **List Profiles** and **View Member Privileges**: Requires `ADMIN` role, any `MANAGE_MEMBERS` category privilege, or membership ownership (for viewing your own privileges).
+
+---
+
+### Create Profile
+
+**POST** `/api/clubs/{clubId}/profiles`
+
+**Authorization:** `ADMIN` or `manage_profiles` endpoint
+
+Creates a new role profile (template) for the club.
+
+**Request Body:**
+
+```json
+{
+  "name": "Content Manager",
+  "endpoints": ["manage_profiles", "assign_profile"]
+}
+```
+
+All endpoint names in the `endpoints` list must exist in the endpoint registry. Duplicates are silently skipped.
+
+**Response:** `201 Created`
+
+```json
+{
+  "profileId": 1,
+  "name": "Content Manager",
+  "endpoints": ["manage_profiles", "assign_profile"]
+}
+```
+
+**Response Codes:**
+
+- `201 Created` — profile created
+- `400 Bad Request` — blank name or invalid endpoint names
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — club not found
+
+---
+
+### Update Profile
+
+**PUT** `/api/clubs/{clubId}/profiles/{profileId}`
+
+**Authorization:** `ADMIN` or `manage_profiles` endpoint
+
+Updates a profile's name and/or endpoint list.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sync` | boolean | `false` | If `true`, propagate template changes to all members currently holding this profile |
+
+**Request Body:**
+
+```json
+{
+  "name": "Senior Content Manager",
+  "endpoints": ["manage_profiles", "assign_profile", "revoke_privilege"]
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "profileId": 1,
+  "name": "Senior Content Manager",
+  "endpoints": ["manage_profiles", "assign_profile", "revoke_privilege"]
+}
+```
+
+**Response Codes:**
+
+- `200 OK` — profile updated
+- `400 Bad Request` — blank name or invalid endpoint names
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — profile or club not found
+
+---
+
+### Delete Profile
+
+**DELETE** `/api/clubs/{clubId}/profiles/{profileId}`
+
+**Authorization:** `ADMIN` or `manage_profiles` endpoint
+
+Deletes a profile. Behavior depends on the `sync` parameter:
+
+| `sync` | Behavior |
+|--------|----------|
+| `false` (default) | Members who held this profile keep their grants as **individual** (null-profile) links — nothing is revoked |
+| `true` | Members who held **only** this profile (and no other source for those grants) have those grants **removed** entirely |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sync` | boolean | `false` | See behavior table above |
+
+**Response:** `204 No Content`
+
+**Response Codes:**
+
+- `204 No Content` — profile deleted
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — profile or club not found
+
+---
+
+### List Club Profiles
+
+**GET** `/api/clubs/{clubId}/profiles`
+
+**Authorization:** `ADMIN` or any club member
+
+Returns all role profiles for the club.
+
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "profileId": 1,
+    "name": "Content Manager",
+    "endpoints": ["manage_profiles", "assign_profile"]
+  },
+  {
+    "profileId": 2,
+    "name": "Event Organizer",
+    "endpoints": ["manage_events"]
+  }
+]
+```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
+- `404 Not Found` — club not found
+
+---
+
+### Assign Privileges to Member
+
+**POST** `/api/clubs/{clubId}/members/{membershipId}/privileges`
+
+**Authorization:** `ADMIN` or `assign_profile` endpoint
+
+Grants privileges to a club member. This endpoint has two mutually exclusive modes:
+
+**Mode 1 — Profile-based assignment** (`profileId` is set):
+
+```json
+{
+  "profileId": 1,
+  "endpoints": null
+}
+```
+
+Grants all endpoints from the specified profile to the member. A `ClubMembershipProfile` join record is created. If `sync=true` is later used on the profile, changes propagate automatically. All endpoint names in the profile's template must be valid (400 if any unknown endpoint is found).
+
+**Mode 2 — Individual assignment** (`profileId` is null):
+
+```json
+{
+  "profileId": null,
+  "endpoints": ["manage_profiles", "assign_profile"]
+}
+```
+
+Grants the specified individual endpoints with no profile link. These grants persist even if profiles are updated or deleted.
+
+**Role check:** Only `ASSISTANT_MEMBER` role can receive privileges. Returns `400` if the target member is `CLUB_PRESIDENT` or `MEMBER`.
+
+**Duplicate handling:** If the member already holds a privilege from the same source (same profile for profile-based, or already individually granted), the duplicate is silently skipped.
+
+**Response:** `201 Created` (empty body)
+
+**Response Codes:**
+
+- `201 Created` — privileges assigned
+- `400 Bad Request` — invalid role, blank/invalid endpoint names, or profile endpoints not in registry
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — club or membership not found
+
+---
+
+### Unassign Profile from Member
+
+**DELETE** `/api/clubs/{clubId}/members/{membershipId}/profiles/{profileId}`
+
+**Authorization:** `ADMIN` or `unassign_profile` endpoint
+
+Removes a profile assignment from a member. All endpoint grants that came from this profile are revoked. Grants that have another source (e.g., an individual grant or a different profile) are preserved.
+
+**Response:** `200 OK` (empty body)
+
+**Response Codes:**
+
+- `200 OK` — profile unassigned
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — membership or profile assignment not found
+
+---
+
+### Revoke Individual Privilege from Member
+
+**DELETE** `/api/clubs/{clubId}/members/{membershipId}/privileges/{endpointName}`
+
+**Authorization:** `ADMIN` or `revoke_privilege` endpoint
+
+Revokes a specific individual (null-profile) privilege from a member. If the privilege was granted via a profile, use the unassign-profile endpoint instead.
+
+**Response:** `200 OK` (empty body)
+
+**Response Codes:**
+
+- `200 OK` — privilege revoked
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions
+- `404 Not Found` — membership or privilege not found
+
+---
+
+### View Member Privileges
+
+**GET** `/api/clubs/{clubId}/members/{membershipId}/privileges`
+
+**Authorization:** `ADMIN`, any `MANAGE_MEMBERS` category privilege, or the member themselves (membership owner)
+
+Returns all privileges currently held by a member, grouped by endpoint, including which profiles contributed each grant.
+
+**Response:** `200 OK`
+
+```json
+{
+  "membershipId": 5,
+  "privileges": [
+    {
+      "privilegeId": 12,
+      "endpointName": "manage_profiles",
+      "grantedDate": "2026-03-15T10:30:00Z",
+      "sources": [
+        {
+          "profileId": 1,
+          "name": "Content Manager"
+        }
+      ]
+    },
+    {
+      "privilegeId": 13,
+      "endpointName": "assign_profile",
+      "grantedDate": "2026-03-15T10:30:00Z",
+      "sources": [
+        {
+          "profileId": 1,
+          "name": "Content Manager"
+        }
+      ]
+    },
+    {
+      "privilegeId": 14,
+      "endpointName": "revoke_privilege",
+      "grantedDate": "2026-04-01T14:00:00Z",
+      "sources": []
+    }
+  ]
+}
+```
+
+- Privileges with a non-empty `sources` list were granted via profile assignment.
+- Privileges with an empty `sources` list were granted individually (no profile link).
+
+**Response Codes:**
+
+- `200 OK` — privileges returned
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — insufficient permissions (not admin, no MANAGE_MEMBERS privilege, and not the membership owner)
+- `404 Not Found` — membership not found
+
+---
 
 ## Common Response Codes
 
