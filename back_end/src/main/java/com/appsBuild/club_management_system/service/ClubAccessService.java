@@ -5,6 +5,7 @@ import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.ClubMembership;
 import com.appsBuild.club_management_system.model.entity.Endpoint;
 import com.appsBuild.club_management_system.model.entity.User;
+import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
 import com.appsBuild.club_management_system.repository.AssistantMemberPrivilegeRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
@@ -105,6 +106,33 @@ public class ClubAccessService {
     return clubMembershipRepository
         .findByUser_UserIdAndClub_ClubId(currentUser(jwt).getUserId(), clubId)
         .isPresent();
+  }
+
+  /** True if the caller owns the given membership. */
+  public boolean isMembershipOwner(Jwt jwt, Long membershipId) {
+    return clubMembershipRepository
+        .findById(membershipId)
+        .map(m -> m.getUser().getUserId().equals(currentUser(jwt).getUserId()))
+        .orElse(false);
+  }
+
+  /** True if the caller holds at least one privilege in the given category within the club. */
+  public boolean hasCategoryPrivilege(Jwt jwt, Long clubId, Category category) {
+    if (isAdmin(jwt)) {
+      return true;
+    }
+    Optional<ClubMembership> membership =
+        clubMembershipRepository.findByUser_UserIdAndClub_ClubId(
+            currentUser(jwt).getUserId(), clubId);
+    if (membership.isEmpty()) {
+      return false;
+    }
+    ClubMembership m = membership.get();
+    if (m.getClubRole() == ClubRole.CLUB_PRESIDENT) {
+      return true;
+    }
+    return assistantMemberPrivilegeRepository
+        .existsByClubMembership_MembershipIdAndEndpoint_Category(m.getMembershipId(), category);
   }
 
   private Endpoint resolveEndpoint(String endpointName) {
