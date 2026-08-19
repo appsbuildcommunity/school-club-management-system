@@ -35,3 +35,17 @@ databaseChangeLog:
       file: db/changelog/migrations/017-create-location-reservation-table.sql
   - include:
       file: db/changelog/migrations/018-create-club-membership-history-table.sql
+  - include:
+      file: db/changelog/migrations/019-add-is-coordination-club-to-club.sql
+  - include:
+      file: db/changelog/migrations/020-create-endpoint-table.sql
+  - include:
+      file: db/changelog/migrations/021-create-club-profile-table.sql
+  - include:
+      file: db/changelog/migrations/022-create-club-profile-endpoints-table.sql
+  - include:
+      file: db/changelog/migrations/023-alter-assistant-member-privilege.sql
+  - include:
+      file: db/changelog/migrations/024-create-role-grant-table.sql
+  - include:
+      file: db/changelog/migrations/025-create-club-membership-profile-table.sql
