@@ -39,8 +39,11 @@ public class ClubMembershipHistory {
   @Column(name = "role_title", nullable = true, length = 100)
   private String roleTitle;
 
-  @Column(name = "joined_date", nullable = false)
-  private Date joinedDate;
+  @Column(name = "started_at", nullable = false)
+  private Date startedAt;
+
+  @Column(name = "ended_at", nullable = false)
+  private Date endedAt;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)

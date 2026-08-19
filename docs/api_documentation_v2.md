@@ -22,6 +22,7 @@ enum Visibility {
   PUBLIC = 'PUBLIC',
   STUDENTS_ONLY = 'STUDENTS_ONLY',
   MEMBERS_ONLY = 'MEMBERS_ONLY',
+  HIDDEN = 'HIDDEN',
 }
 
 enum AttachmentType {

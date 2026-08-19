@@ -49,13 +49,13 @@ public class User {
   @Column(name = "created_at", nullable = false)
   private Date createdAt;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<ClubMembershipHistory> membershipHistory;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<ClubMembership> clubMemberships;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<JoinRequest> joinRequests;
 
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
