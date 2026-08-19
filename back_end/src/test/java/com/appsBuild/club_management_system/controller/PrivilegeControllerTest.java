@@ -18,16 +18,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Date;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PrivilegeController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@EnableWebSecurity
 class PrivilegeControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -36,6 +42,16 @@ class PrivilegeControllerTest {
 
   @MockitoBean private ClubProfileService clubProfileService;
   @MockitoBean(name = "clubAccess") private ClubAccessService clubAccessService;
+
+  @BeforeEach
+  void setUp() {
+    Jwt jwt = Jwt.withTokenValue("test-token")
+        .header("alg", "none")
+        .claim("sub", "test-user")
+        .build();
+    SecurityContextHolder.getContext()
+        .setAuthentication(new JwtAuthenticationToken(jwt));
+  }
 
   // ── createProfile ───────────────────────────────────────────────────
 
