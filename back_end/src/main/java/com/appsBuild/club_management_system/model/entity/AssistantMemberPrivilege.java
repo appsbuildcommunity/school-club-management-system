@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "assistant_member_privilege")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

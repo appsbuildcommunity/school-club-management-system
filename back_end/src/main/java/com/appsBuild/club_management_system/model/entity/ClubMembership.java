@@ -5,24 +5,14 @@ import java.util.List;
 
 import com.appsBuild.club_management_system.model.enums.ClubRole;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table( name = "club_membership")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,8 +32,8 @@ public class ClubMembership {
   @Column(name = "role_description", nullable = true, length = 255)
   private String roleDescription;
 
-  @Column(name = "joined_date", nullable = false)
-  private Date joinedDate;
+  @Column(name = "started_at", nullable = false)
+  private Date startedAt;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -56,6 +46,6 @@ public class ClubMembership {
   @OneToMany(mappedBy = "clubMembership", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<ClubMembershipProfile> assignedProfiles;
 
-  @OneToMany(mappedBy = "clubMembership", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "clubMembership", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
   private List<AssistantMemberPrivilege> privileges;
 }
