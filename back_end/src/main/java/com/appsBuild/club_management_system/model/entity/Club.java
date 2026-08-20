@@ -1,15 +1,14 @@
 package com.appsBuild.club_management_system.model.entity;
 
-import java.util.List;
-
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="club")
+@Table(name = "club")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,6 +27,9 @@ public class Club {
 
   @Column(name = "description", nullable = true, length = 1000)
   private String description;
+
+  @Column(name = "is_coordination_club", nullable = false)
+  private boolean isCoordinationClub;
 
   @OneToMany(mappedBy = "club", fetch = FetchType.LAZY)
   private List<ClubMembership> memberships;

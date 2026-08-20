@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36">
   <diagram name="Page-1" id="hveR1R5teBf00vcE5VuI">
-    <mxGraphModel dx="2048" dy="1842" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1741" dy="1635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -41,7 +41,7 @@
           <mxGeometry height="26" width="180" y="26" as="geometry" />
         </mxCell>
         <mxCell id="club" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="Club" vertex="1">
-          <mxGeometry height="130" width="200" x="650" y="510" as="geometry" />
+          <mxGeometry height="130" width="200" x="650" y="530" as="geometry" />
         </mxCell>
         <mxCell id="VWK_g-ktPHabhC2MgE6s-63" parent="club" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- clubId: String" vertex="1">
           <mxGeometry height="26" width="200" y="26" as="geometry" />
@@ -56,7 +56,7 @@
           <mxGeometry height="26" width="200" y="104" as="geometry" />
         </mxCell>
         <mxCell id="clubmembership" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="ClubMembership" vertex="1">
-          <mxGeometry height="156" width="220" x="340" y="497" as="geometry" />
+          <mxGeometry height="156" width="220" x="350" y="454" as="geometry" />
         </mxCell>
         <mxCell id="VWK_g-ktPHabhC2MgE6s-67" parent="clubmembership" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- membershipId: String" vertex="1">
           <mxGeometry height="26" width="220" y="26" as="geometry" />
@@ -74,7 +74,7 @@
           <mxGeometry height="26" width="220" y="130" as="geometry" />
         </mxCell>
         <mxCell id="clubrole" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="&lt;&lt;enumeration&gt;&gt;&#xa;ClubRole" vertex="1">
-          <mxGeometry height="118" width="160" x="110" y="503" as="geometry" />
+          <mxGeometry height="118" width="160" x="160" y="360" as="geometry" />
         </mxCell>
         <mxCell id="VWK_g-ktPHabhC2MgE6s-70" parent="clubrole" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="CLUB_PRESIDENT" vertex="1">
           <mxGeometry height="26" width="160" y="40" as="geometry" />
@@ -85,32 +85,8 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-69" parent="clubrole" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MEMBER" vertex="1">
           <mxGeometry height="26" width="160" y="92" as="geometry" />
         </mxCell>
-        <mxCell id="clubmembershiphistory" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="ClubMembershipHistory" vertex="1">
-          <mxGeometry height="208" width="200" x="-100" y="471" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-72" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- clubMembershipHistoryId: String" vertex="1">
-          <mxGeometry height="26" width="200" y="26" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-73" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- clubRole: ClubRole" vertex="1">
-          <mxGeometry height="26" width="200" y="52" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-74" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- roleDescription: String" vertex="1">
-          <mxGeometry height="26" width="200" y="78" as="geometry" />
-        </mxCell>
-        <mxCell id="F4K1PpauVWGap8fmeNAU-26" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- roleTitle: String" vertex="1">
-          <mxGeometry height="26" width="200" y="104" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-75" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- joinedDate: Date" vertex="1">
-          <mxGeometry height="26" width="200" y="130" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-76" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- userId: String" vertex="1">
-          <mxGeometry height="26" width="200" y="156" as="geometry" />
-        </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-77" parent="clubmembershiphistory" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- clubId: String" vertex="1">
-          <mxGeometry height="26" width="200" y="182" as="geometry" />
-        </mxCell>
         <mxCell id="assistantprivileges" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="AssistantMemberPrivilege" vertex="1">
-          <mxGeometry height="104" width="220" x="340" y="721" as="geometry" />
+          <mxGeometry height="104" width="220" x="220" y="730" as="geometry" />
         </mxCell>
         <mxCell id="x_qmKzzBZFDT8rWRl6u9-5" parent="assistantprivileges" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;- privilegeId: String&lt;/span&gt;" vertex="1">
           <mxGeometry height="26" width="220" y="26" as="geometry" />
@@ -211,10 +187,10 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-79" parent="comment" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- createdAt: Date" vertex="1">
           <mxGeometry height="26" width="180" y="78" as="geometry" />
         </mxCell>
-        <mxCell id="clubmembership-clubrole" edge="1" parent="1" source="clubmembership" style="endArrow=none;html=1;endSize=12;startArrow=none;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;labelBorderColor=none;textShadow=0;" target="clubrole" value="">
+        <mxCell id="clubmembership-clubrole" edge="1" parent="1" source="clubmembership" style="endArrow=none;html=1;endSize=12;startArrow=none;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;exitX=0.273;exitY=0.019;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="clubrole" value="">
           <mxGeometry relative="1" width="160" as="geometry">
             <Array as="points">
-              <mxPoint x="280" y="560" />
+              <mxPoint x="410" y="419" />
             </Array>
             <mxPoint x="400" y="600" as="sourcePoint" />
             <mxPoint x="560" y="600" as="targetPoint" />
@@ -267,9 +243,9 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-14" connectable="0" parent="VWK_g-ktPHabhC2MgE6s-12" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
           <mxGeometry relative="1" x="1" as="geometry" />
         </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-15" edge="1" parent="1" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;entryX=-0.001;entryY=0.47;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;" value="">
+        <mxCell id="VWK_g-ktPHabhC2MgE6s-15" edge="1" parent="1" source="VWK_g-ktPHabhC2MgE6s-66" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;entryX=-0.001;entryY=0.47;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" value="">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="560" y="570" as="sourcePoint" />
+            <mxPoint x="580" y="571" as="sourcePoint" />
             <mxPoint x="649.7999999999997" y="570.78" as="targetPoint" />
           </mxGeometry>
         </mxCell>
@@ -326,6 +302,10 @@
         </mxCell>
         <mxCell id="VWK_g-ktPHabhC2MgE6s-27" edge="1" parent="1" source="VWK_g-ktPHabhC2MgE6s-61" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.625;exitY=0.962;exitDx=0;exitDy=0;exitPerimeter=0;labelBorderColor=none;textShadow=0;" target="comment" value="">
           <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="532" y="430" />
+              <mxPoint x="1060" y="430" />
+            </Array>
             <mxPoint x="567.96" y="392.30600000000004" as="sourcePoint" />
             <mxPoint x="950" y="450" as="targetPoint" />
           </mxGeometry>
@@ -364,7 +344,9 @@
             <Array as="points">
               <mxPoint x="495" y="860" />
               <mxPoint x="710" y="860" />
-              <mxPoint x="710" y="658" />
+              <mxPoint x="710" y="700" />
+              <mxPoint x="910" y="700" />
+              <mxPoint x="910" y="658" />
             </Array>
             <mxPoint x="990" y="1163" as="sourcePoint" />
             <mxPoint x="967.6599999999999" y="657.5999999999999" as="targetPoint" />
@@ -399,7 +381,7 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-43" edge="1" parent="1" style="endArrow=none;startArrow=none;endFill=0;startFill=0;endSize=8;html=1;verticalAlign=bottom;dashed=1;labelBackgroundColor=none;dashPattern=10 10;rounded=0;labelBorderColor=none;textShadow=0;" value="{xor}">
           <mxGeometry relative="1" width="160" x="-0.037" y="20" as="geometry">
             <mxPoint as="offset" />
-            <mxPoint x="900" y="660" as="sourcePoint" />
+            <mxPoint x="900" y="700" as="sourcePoint" />
             <mxPoint x="900" y="930" as="targetPoint" />
           </mxGeometry>
         </mxCell>
@@ -494,18 +476,6 @@
             <mxPoint as="offset" />
             <mxPoint x="980" y="380" as="sourcePoint" />
             <mxPoint x="1050" y="380" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="0hO4LakNt_7Vl-riMp0z-4" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="&lt;&lt;enumeration&gt;&gt;&#xa;Privilege" vertex="1">
-          <mxGeometry height="66" width="140" x="80" y="740" as="geometry" />
-        </mxCell>
-        <mxCell id="0hO4LakNt_7Vl-riMp0z-9" edge="1" parent="1" source="0hO4LakNt_7Vl-riMp0z-4" style="endArrow=none;html=1;endSize=12;startArrow=none;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;entryX=0.001;entryY=0.005;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;" target="0hO4LakNt_7Vl-riMp0z-8" value="">
-          <mxGeometry relative="1" width="160" as="geometry">
-            <Array as="points">
-              <mxPoint x="330" y="773" />
-            </Array>
-            <mxPoint x="290" y="730.5" as="sourcePoint" />
-            <mxPoint x="330" y="780" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="0hO4LakNt_7Vl-riMp0z-11" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="LocationReservation" vertex="1">
@@ -676,6 +646,199 @@
             <mxPoint x="1290" y="1248" as="sourcePoint" />
             <mxPoint x="1369" y="710" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="new-endpoint" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="Endpoint" vertex="1">
+          <mxGeometry height="156" width="200" x="-340" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="new-endpoint-id" parent="new-endpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- endpointId: Long" vertex="1">
+          <mxGeometry height="26" width="200" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="new-endpoint-name" parent="new-endpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- name: String" vertex="1">
+          <mxGeometry height="26" width="200" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="new-endpoint-desc" parent="new-endpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- description: String" vertex="1">
+          <mxGeometry height="26" width="200" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="new-endpoint-category" parent="new-endpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- category: Category" vertex="1">
+          <mxGeometry height="26" width="200" y="104" as="geometry" />
+        </mxCell>
+        <mxCell id="new-endpoint-privileged" parent="new-endpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- privileged: boolean" vertex="1">
+          <mxGeometry height="26" width="200" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="new-category" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="&lt;&lt;enumeration&gt;&gt;&#xa;Category" vertex="1">
+          <mxGeometry height="144" width="160" x="-340" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cat-manage-posts" parent="new-category" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MANAGE_POSTS" vertex="1">
+          <mxGeometry height="26" width="160" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cat-manage-events" parent="new-category" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MANAGE_EVENTS" vertex="1">
+          <mxGeometry height="26" width="160" y="66" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cat-manage-members" parent="new-category" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MANAGE_MEMBERS" vertex="1">
+          <mxGeometry height="26" width="160" y="92" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cat-manage-clubs" parent="new-category" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MANAGE_CLUBS" vertex="1">
+          <mxGeometry height="26" width="160" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="new-clubprofile" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="ClubProfile" vertex="1">
+          <mxGeometry height="104" width="200" x="-250" y="543" as="geometry" />
+        </mxCell>
+        <mxCell id="new-clubprofile-id" parent="new-clubprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- clubProfileId: Long" vertex="1">
+          <mxGeometry height="26" width="200" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="new-clubprofile-name" parent="new-clubprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- name: String" vertex="1">
+          <mxGeometry height="26" width="200" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="new-clubprofile-created" parent="new-clubprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- createdAt: Date" vertex="1">
+          <mxGeometry height="26" width="200" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="new-clubmembershipprofile" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="ClubMembershipProfile" vertex="1">
+          <mxGeometry height="78" width="200" x="60" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cmp-id" parent="new-clubmembershipprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- id: Long" vertex="1">
+          <mxGeometry height="26" width="200" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="new-cmp-assigned" parent="new-clubmembershipprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- assignedDate: Date" vertex="1">
+          <mxGeometry height="26" width="200" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="new-rolegrant" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="RoleGrant" vertex="1">
+          <mxGeometry height="52" width="200" x="-90" y="747" as="geometry" />
+        </mxCell>
+        <mxCell id="new-rolegrant-id" parent="new-rolegrant" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- roleGrantId: Long" vertex="1">
+          <mxGeometry height="26" width="200" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-endpoint-category" edge="1" parent="1" source="new-endpoint-privileged" style="endArrow=none;html=1;endSize=12;startArrow=none;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;exitX=0.369;exitY=1.035;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="new-category" value="">
+          <mxGeometry relative="1" width="160" as="geometry">
+            <Array as="points">
+              <mxPoint x="-260" y="887" />
+            </Array>
+            <mxPoint x="80" y="844" as="sourcePoint" />
+            <mxPoint x="100" y="982" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-club" edge="1" parent="1" source="new-clubprofile" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;" target="x_qmKzzBZFDT8rWRl6u9-25" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-100" y="500" />
+              <mxPoint x="-10" y="500" />
+              <mxPoint x="-10" y="680" />
+              <mxPoint x="590" y="680" />
+              <mxPoint x="590" y="595" />
+              <mxPoint x="650" y="595" />
+            </Array>
+            <mxPoint x="960" y="562" as="sourcePoint" />
+            <mxPoint x="850" y="575" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-club-source" connectable="0" parent="new-edge-clubprofile-club" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-club-target" connectable="0" parent="new-edge-clubprofile-club" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-endpoint" edge="1" parent="1" source="new-clubprofile-name" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;" target="new-endpoint" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-300" y="608" />
+              <mxPoint x="-300" y="670" />
+              <mxPoint x="-240" y="670" />
+            </Array>
+            <mxPoint x="960" y="614" as="sourcePoint" />
+            <mxPoint x="280" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-endpoint-source" connectable="0" parent="new-edge-clubprofile-endpoint" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-clubprofile-endpoint-target" connectable="0" parent="new-edge-clubprofile-endpoint" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-cmp-membership" edge="1" parent="1" source="new-cmp-id" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1.006;exitY=0.766;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="F4K1PpauVWGap8fmeNAU-12" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="291" y="569" />
+              <mxPoint x="300" y="569" />
+              <mxPoint x="310" y="570" />
+              <mxPoint x="310" y="532" />
+              <mxPoint x="350" y="532" />
+            </Array>
+            <mxPoint x="960" y="760" as="sourcePoint" />
+            <mxPoint x="560" y="575" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-cmp-membership-source" connectable="0" parent="new-edge-cmp-membership" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-cmp-membership-target" connectable="0" parent="new-edge-cmp-membership" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-cmp-clubprofile" edge="1" parent="1" source="new-cmp-id" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;" target="new-clubprofile-name" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1060" y="799" as="sourcePoint" />
+            <mxPoint x="1060" y="614" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-cmp-clubprofile-source" connectable="0" parent="new-edge-cmp-clubprofile" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry">
+            <mxPoint x="-20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-cmp-clubprofile-target" connectable="0" parent="new-edge-cmp-clubprofile" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry">
+            <mxPoint x="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-clubprofile" edge="1" parent="1" source="new-rolegrant" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;" target="new-clubprofile" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="747" />
+              <mxPoint y="700" />
+              <mxPoint x="-150" y="700" />
+            </Array>
+            <mxPoint x="1060" y="870" as="sourcePoint" />
+            <mxPoint x="1060" y="614" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-clubprofile-source" connectable="0" parent="new-edge-rolegrant-clubprofile" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-clubprofile-target" connectable="0" parent="new-edge-rolegrant-clubprofile" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-privilege" edge="1" parent="1" source="new-rolegrant-id" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.005;entryY=0.1;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;entryPerimeter=0;" target="0hO4LakNt_7Vl-riMp0z-8" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="779" />
+              <mxPoint x="210" y="782" />
+              <mxPoint x="221" y="782" />
+            </Array>
+            <mxPoint x="960" y="896" as="sourcePoint" />
+            <mxPoint x="560" y="773" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-privilege-source" connectable="0" parent="new-edge-rolegrant-privilege" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="new-edge-rolegrant-privilege-target" connectable="0" parent="new-edge-rolegrant-privilege" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-1" edge="1" parent="1" source="new-endpoint-category" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1.003;exitY=0.322;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="x_qmKzzBZFDT8rWRl6u9-4" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-139" y="840" />
+              <mxPoint x="10" y="840" />
+              <mxPoint x="10" y="820" />
+              <mxPoint x="71" y="820" />
+            </Array>
+            <mxPoint x="-40" y="847" as="sourcePoint" />
+            <mxPoint x="71" y="846" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-2" connectable="0" parent="2dtKtJV2h0pFK1PRkDqZ-1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-3" connectable="0" parent="2dtKtJV2h0pFK1PRkDqZ-1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

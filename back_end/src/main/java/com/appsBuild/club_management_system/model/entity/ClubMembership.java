@@ -43,6 +43,9 @@ public class ClubMembership {
   @JoinColumn(name = "club_id", nullable = false)
   private Club club;
 
+  @OneToMany(mappedBy = "clubMembership", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<ClubMembershipProfile> assignedProfiles;
+
   @OneToMany(mappedBy = "clubMembership", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
   private List<AssistantMemberPrivilege> privileges;
 }
