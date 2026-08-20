@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36">
   <diagram name="Page-1" id="hveR1R5teBf00vcE5VuI">
-    <mxGraphModel dx="2377" dy="1959" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1741" dy="1635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -820,6 +820,24 @@
           <mxGeometry relative="1" x="-1" as="geometry" />
         </mxCell>
         <mxCell id="new-edge-rolegrant-privilege-target" connectable="0" parent="new-edge-rolegrant-privilege" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-1" edge="1" parent="1" source="new-endpoint-category" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1.003;exitY=0.322;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="x_qmKzzBZFDT8rWRl6u9-4" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-139" y="840" />
+              <mxPoint x="10" y="840" />
+              <mxPoint x="10" y="820" />
+              <mxPoint x="71" y="820" />
+            </Array>
+            <mxPoint x="-40" y="847" as="sourcePoint" />
+            <mxPoint x="71" y="846" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-2" connectable="0" parent="2dtKtJV2h0pFK1PRkDqZ-1" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-1" as="geometry" />
+        </mxCell>
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-3" connectable="0" parent="2dtKtJV2h0pFK1PRkDqZ-1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
           <mxGeometry relative="1" x="1" as="geometry" />
         </mxCell>
       </root>
