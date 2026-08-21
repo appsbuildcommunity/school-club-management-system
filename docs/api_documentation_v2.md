@@ -38,12 +38,6 @@ enum DemandStatus {
   CANCELLED = 'CANCELLED',
 }
 
-enum Privilege {
-  MANAGE_POSTS = 'MANAGE_POSTS',
-  MANAGE_EVENTS = 'MANAGE_EVENTS',
-  MANAGE_MEMBERS = 'MANAGE_MEMBERS',
-}
-
 enum Category {
   MANAGE_POSTS = 'MANAGE_POSTS',
   MANAGE_EVENTS = 'MANAGE_EVENTS',
@@ -151,7 +145,6 @@ interface MemberPrivilegesResponse {
 }
 
 interface MemberPrivilege {
-  privilegeId: number
   endpointName: string      // e.g. "manage_profiles"
   grantedDate: string       // ISO 8601 date
   sources: SourceProfile[]  // which profiles this privilege came from (empty = individual grant)
@@ -1484,13 +1477,7 @@ All endpoint names in the `endpoints` list must exist in the endpoint registry. 
 
 **Authorization:** `ADMIN` or `manage_profiles` endpoint
 
-Updates a profile's name and/or endpoint list.
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `sync` | boolean | `false` | If `true`, propagate template changes to all members currently holding this profile |
+Updates a profile's name and/or endpoint list. Changes take effect immediately — members holding this profile see the updated set of endpoints on next access check.
 
 **Request Body:**
 
@@ -1527,18 +1514,7 @@ Updates a profile's name and/or endpoint list.
 
 **Authorization:** `ADMIN` or `manage_profiles` endpoint
 
-Deletes a profile. Behavior depends on the `sync` parameter:
-
-| `sync` | Behavior |
-|--------|----------|
-| `false` (default) | Members who held this profile keep their grants as **individual** (null-profile) links — nothing is revoked |
-| `true` | Members who held **only** this profile (and no other source for those grants) have those grants **removed** entirely |
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `sync` | boolean | `false` | See behavior table above |
+Deletes a profile. Members who held this profile keep their grants — the profile join record (`club_membership_profile`) is removed, but individually granted endpoints are unaffected.
 
 **Response:** `204 No Content`
 
@@ -1683,7 +1659,6 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
   "membershipId": 5,
   "privileges": [
     {
-      "privilegeId": 12,
       "endpointName": "manage_profiles",
       "grantedDate": "2026-03-15T10:30:00Z",
       "sources": [
@@ -1694,7 +1669,6 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
       ]
     },
     {
-      "privilegeId": 13,
       "endpointName": "assign_profile",
       "grantedDate": "2026-03-15T10:30:00Z",
       "sources": [
@@ -1705,7 +1679,6 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
       ]
     },
     {
-      "privilegeId": 14,
       "endpointName": "revoke_privilege",
       "grantedDate": "2026-04-01T14:00:00Z",
       "sources": []

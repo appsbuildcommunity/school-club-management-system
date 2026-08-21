@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36">
   <diagram name="Page-1" id="hveR1R5teBf00vcE5VuI">
-    <mxGraphModel dx="1741" dy="1635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2147" dy="1842" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -85,17 +85,14 @@
         <mxCell id="VWK_g-ktPHabhC2MgE6s-69" parent="clubrole" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="MEMBER" vertex="1">
           <mxGeometry height="26" width="160" y="92" as="geometry" />
         </mxCell>
-        <mxCell id="assistantprivileges" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="AssistantMemberPrivilege" vertex="1">
-          <mxGeometry height="104" width="220" x="220" y="730" as="geometry" />
+        <mxCell id="clubmembershipendpoint" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="ClubMembershipEndpoint" vertex="1">
+          <mxGeometry height="78" width="220" x="220" y="730" as="geometry" />
         </mxCell>
-        <mxCell id="x_qmKzzBZFDT8rWRl6u9-5" parent="assistantprivileges" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;- privilegeId: String&lt;/span&gt;" vertex="1">
+        <mxCell id="cme-id" parent="clubmembershipendpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- id: Long" vertex="1">
           <mxGeometry height="26" width="220" y="26" as="geometry" />
         </mxCell>
-        <mxCell id="0hO4LakNt_7Vl-riMp0z-8" parent="assistantprivileges" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;- privilege: Privilege&lt;/span&gt;" vertex="1">
+        <mxCell id="cme-grantedDate" parent="clubmembershipendpoint" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- grantedDate: Date" vertex="1">
           <mxGeometry height="26" width="220" y="52" as="geometry" />
-        </mxCell>
-        <mxCell id="x_qmKzzBZFDT8rWRl6u9-4" parent="assistantprivileges" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="&lt;span style=&quot;text-wrap-mode: nowrap;&quot;&gt;- grantedDate: Date&lt;/span&gt;" vertex="1">
-          <mxGeometry height="26" width="220" y="78" as="geometry" />
         </mxCell>
         <mxCell id="post" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="Post" vertex="1">
           <mxGeometry height="156" width="180" x="360" y="880" as="geometry" />
@@ -360,7 +357,7 @@
             <mxPoint y="30" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-39" edge="1" parent="1" source="VWK_g-ktPHabhC2MgE6s-68" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.458;exitY=1.05;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.454;entryY=-0.006;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;" target="assistantprivileges" value="">
+        <mxCell id="VWK_g-ktPHabhC2MgE6s-39" edge="1" parent="1" source="VWK_g-ktPHabhC2MgE6s-68" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.458;exitY=1.05;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.454;entryY=-0.006;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;textShadow=0;" target="clubmembershipendpoint" value="">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="441" y="660" />
@@ -370,7 +367,7 @@
             <mxPoint x="420" y="660" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="VWK_g-ktPHabhC2MgE6s-40" connectable="0" parent="VWK_g-ktPHabhC2MgE6s-39" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
+        <mxCell id="VWK_g-ktPHabhC2MgE6s-40" connectable="0" parent="VWK_g-ktPHabhC2MgE6s-39" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
           <mxGeometry relative="1" x="-1" as="geometry">
             <mxPoint y="20" as="offset" />
           </mxGeometry>
@@ -701,12 +698,6 @@
         <mxCell id="new-cmp-assigned" parent="new-clubmembershipprofile" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- assignedDate: Date" vertex="1">
           <mxGeometry height="26" width="200" y="52" as="geometry" />
         </mxCell>
-        <mxCell id="new-rolegrant" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;labelBorderColor=none;textShadow=0;" value="RoleGrant" vertex="1">
-          <mxGeometry height="52" width="200" x="-90" y="747" as="geometry" />
-        </mxCell>
-        <mxCell id="new-rolegrant-id" parent="new-rolegrant" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;labelBorderColor=none;textShadow=0;" value="- roleGrantId: Long" vertex="1">
-          <mxGeometry height="26" width="200" y="26" as="geometry" />
-        </mxCell>
         <mxCell id="new-edge-endpoint-category" edge="1" parent="1" source="new-endpoint-privileged" style="endArrow=none;html=1;endSize=12;startArrow=none;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;exitX=0.369;exitY=1.035;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="new-category" value="">
           <mxGeometry relative="1" width="160" as="geometry">
             <Array as="points">
@@ -748,7 +739,9 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="new-edge-clubprofile-endpoint-source" connectable="0" parent="new-edge-clubprofile-endpoint" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
-          <mxGeometry relative="1" x="-1" as="geometry" />
+          <mxGeometry relative="1" x="-1" as="geometry">
+            <mxPoint x="-20" as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="new-edge-clubprofile-endpoint-target" connectable="0" parent="new-edge-clubprofile-endpoint" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
           <mxGeometry relative="1" x="1" as="geometry" />
@@ -788,47 +781,13 @@
             <mxPoint x="10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="new-edge-rolegrant-clubprofile" edge="1" parent="1" source="new-rolegrant" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;" target="new-clubprofile" value="">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint y="747" />
-              <mxPoint y="700" />
-              <mxPoint x="-150" y="700" />
-            </Array>
-            <mxPoint x="1060" y="870" as="sourcePoint" />
-            <mxPoint x="1060" y="614" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="new-edge-rolegrant-clubprofile-source" connectable="0" parent="new-edge-rolegrant-clubprofile" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
-          <mxGeometry relative="1" x="-1" as="geometry" />
-        </mxCell>
-        <mxCell id="new-edge-rolegrant-clubprofile-target" connectable="0" parent="new-edge-rolegrant-clubprofile" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
-          <mxGeometry relative="1" x="1" as="geometry" />
-        </mxCell>
-        <mxCell id="new-edge-rolegrant-privilege" edge="1" parent="1" source="new-rolegrant-id" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.005;entryY=0.1;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;entryPerimeter=0;" target="0hO4LakNt_7Vl-riMp0z-8" value="">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="210" y="779" />
-              <mxPoint x="210" y="782" />
-              <mxPoint x="221" y="782" />
-            </Array>
-            <mxPoint x="960" y="896" as="sourcePoint" />
-            <mxPoint x="560" y="773" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="new-edge-rolegrant-privilege-source" connectable="0" parent="new-edge-rolegrant-privilege" style="edgeLabel;resizable=0;html=1;align=left;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
-          <mxGeometry relative="1" x="-1" as="geometry" />
-        </mxCell>
-        <mxCell id="new-edge-rolegrant-privilege-target" connectable="0" parent="new-edge-rolegrant-privilege" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="1" vertex="1">
-          <mxGeometry relative="1" x="1" as="geometry" />
-        </mxCell>
-        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-1" edge="1" parent="1" source="new-endpoint-category" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1.003;exitY=0.322;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;exitPerimeter=0;" target="x_qmKzzBZFDT8rWRl6u9-4" value="">
+        <mxCell id="2dtKtJV2h0pFK1PRkDqZ-1" edge="1" parent="1" source="new-endpoint-category" style="endArrow=none;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;exitX=1.003;exitY=0.322;exitDx=0;exitDy=0;entryX=0.119;entryY=1.033;entryDx=0;entryDy=0;labelBorderColor=none;textShadow=0;exitPerimeter=0;entryPerimeter=0;" target="cme-grantedDate" value="">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="-139" y="840" />
               <mxPoint x="10" y="840" />
-              <mxPoint x="10" y="820" />
-              <mxPoint x="71" y="820" />
+              <mxPoint x="10" y="830" />
+              <mxPoint x="246" y="830" />
             </Array>
             <mxPoint x="-40" y="847" as="sourcePoint" />
             <mxPoint x="71" y="846" as="targetPoint" />
@@ -838,7 +797,9 @@
           <mxGeometry relative="1" x="-1" as="geometry" />
         </mxCell>
         <mxCell id="2dtKtJV2h0pFK1PRkDqZ-3" connectable="0" parent="2dtKtJV2h0pFK1PRkDqZ-1" style="edgeLabel;resizable=0;html=1;align=right;verticalAlign=bottom;labelBorderColor=none;textShadow=0;" value="0..*" vertex="1">
-          <mxGeometry relative="1" x="1" as="geometry" />
+          <mxGeometry relative="1" x="1" as="geometry">
+            <mxPoint y="11" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

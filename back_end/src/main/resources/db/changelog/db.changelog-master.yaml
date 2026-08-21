@@ -44,8 +44,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/migrations/022-create-club-profile-endpoints-table.sql
   - include:
-      file: db/changelog/migrations/023-alter-assistant-member-privilege.sql
-  - include:
-      file: db/changelog/migrations/024-create-role-grant-table.sql
+      file: db/changelog/migrations/023-create-club-membership-endpoint.sql
   - include:
       file: db/changelog/migrations/025-create-club-membership-profile-table.sql

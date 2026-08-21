@@ -47,5 +47,5 @@ public class ClubMembership {
   private List<ClubMembershipProfile> assignedProfiles;
 
   @OneToMany(mappedBy = "clubMembership", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
-  private List<AssistantMemberPrivilege> privileges;
+  private List<ClubMembershipEndpoint> individualPrivileges;
 }

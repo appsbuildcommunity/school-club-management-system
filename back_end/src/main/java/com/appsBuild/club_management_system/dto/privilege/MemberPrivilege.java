@@ -4,4 +4,4 @@ import java.util.Date;
 import java.util.List;
 
 public record MemberPrivilege(
-    Long privilegeId, String endpointName, Date grantedDate, List<SourceProfile> sources) {}
+    String endpointName, Date grantedDate, List<SourceProfile> sources) {}

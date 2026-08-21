@@ -1,5 +1,6 @@
 package com.appsBuild.club_management_system.repository;
 
+import com.appsBuild.club_management_system.model.entity.ProfilePicture;
 import com.appsBuild.club_management_system.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     // Finds a user by their Keycloak subject ID (sub claim) from the JWT, if one exists.
     Optional<User> findByKeycloakSub(String keycloakSub);
+    // Finds the profile picture belonging to the given user, if one exists.
+    Optional<ProfilePicture> findProfilePictureByUserId(Long userId);
 }

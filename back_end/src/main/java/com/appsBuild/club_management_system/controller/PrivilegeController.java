@@ -12,8 +12,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,9 +29,8 @@ public class PrivilegeController {
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'manage_profiles')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'manage_profiles')")
   public ResponseEntity<ClubProfileResponse> createProfile(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @RequestBody ClubProfileRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,14 +43,12 @@ public class PrivilegeController {
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'manage_profiles')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'manage_profiles')")
   public ResponseEntity<ClubProfileResponse> updateProfile(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @PathVariable Long profileId,
-      @RequestParam(defaultValue = "false") boolean sync,
       @RequestBody ClubProfileRequest request) {
-    return ResponseEntity.ok(clubProfileService.updateProfile(clubId, profileId, request, sync));
+    return ResponseEntity.ok(clubProfileService.updateProfile(clubId, profileId, request));
   }
 
   @DeleteMapping("/profiles/{profileId}")
@@ -62,20 +57,18 @@ public class PrivilegeController {
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'manage_profiles')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'manage_profiles')")
   public ResponseEntity<Void> deleteProfile(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
-      @PathVariable Long profileId,
-      @RequestParam(defaultValue = "false") boolean sync) {
-    clubProfileService.deleteProfile(clubId, profileId, sync);
+      @PathVariable Long profileId) {
+    clubProfileService.deleteProfile(clubId, profileId);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/profiles")
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasMembership(#jwt, #clubId)")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasMembership(#clubId)")
   public ResponseEntity<List<ClubProfileResponse>> listProfiles(
-      @AuthenticationPrincipal Jwt jwt, @PathVariable Long clubId) {
+      @PathVariable Long clubId) {
     return ResponseEntity.ok(clubProfileService.listProfiles(clubId));
   }
 
@@ -87,9 +80,8 @@ public class PrivilegeController {
       description = "Assign a profile or individual privileges to a member",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'assign_profile')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'assign_profile')")
   public ResponseEntity<Void> assignPrivileges(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @PathVariable Long membershipId,
       @RequestBody AssignPrivilegesRequest request) {
@@ -105,9 +97,8 @@ public class PrivilegeController {
       description = "Unassign a profile from a member",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'unassign_profile')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'unassign_profile')")
   public ResponseEntity<Void> unassignProfile(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @PathVariable Long membershipId,
       @PathVariable Long profileId) {
@@ -121,9 +112,8 @@ public class PrivilegeController {
       description = "Revoke an individual privilege from a member",
       category = Category.MANAGE_MEMBERS,
       privileged = false)
-  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#jwt, #clubId, 'revoke_privilege')")
+  @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'revoke_privilege')")
   public ResponseEntity<Void> revokePrivilege(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @PathVariable Long membershipId,
       @PathVariable String endpointName) {
@@ -135,11 +125,10 @@ public class PrivilegeController {
 
   @GetMapping("/members/{membershipId}/privileges")
   @PreAuthorize(
-      "hasRole('ADMIN') or @clubAccess.hasCategoryPrivilege(#jwt, #clubId,"
+      "hasRole('ADMIN') or @clubAccess.hasCategoryPrivilege(#clubId,"
           + " T(com.appsBuild.club_management_system.model.enums.Category).MANAGE_MEMBERS) or"
-          + " @clubAccess.isMembershipOwner(#jwt, #membershipId)")
+          + " @clubAccess.isMembershipOwner(#membershipId)")
   public ResponseEntity<MemberPrivilegesResponse> getMemberPrivileges(
-      @AuthenticationPrincipal Jwt jwt,
       @PathVariable Long clubId,
       @PathVariable Long membershipId) {
     return ResponseEntity.ok(clubProfileService.getMemberPrivileges(clubId, membershipId));

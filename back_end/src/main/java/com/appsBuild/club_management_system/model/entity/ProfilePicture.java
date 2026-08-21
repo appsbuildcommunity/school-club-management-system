@@ -19,10 +19,4 @@ public class ProfilePicture {
 
   @Column(name = "s3_key", nullable = false, length = 500)
   private String s3Key;
-
-  @OneToOne(mappedBy = "profilePicture")
-  private User user;
-
-  @OneToOne(mappedBy = "profilePicture")
-  private Club club;
 }

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 @ExtendWith(MockitoExtension.class)
 class EndpointServiceTest {
@@ -50,12 +49,11 @@ class EndpointServiceTest {
   }
 
   @Test
-  void list_adminSeesAll() {
-    Jwt jwt = mock(Jwt.class);
-    when(clubAccessService.isAdmin(jwt)).thenReturn(true);
+  void getEndpoints_adminSeesAll() {
+    when(clubAccessService.isAdmin()).thenReturn(true);
     when(endpointRepository.findAll()).thenReturn(List.of(nonPrivileged, privileged));
 
-    List<EndpointResponse> result = endpointService.list(jwt);
+    List<EndpointResponse> result = endpointService.getEndpoints();
 
     assertEquals(2, result.size());
     verify(endpointRepository).findAll();
@@ -63,26 +61,24 @@ class EndpointServiceTest {
   }
 
   @Test
-  void list_coordinationPresidentSeesAll() {
-    Jwt jwt = mock(Jwt.class);
-    when(clubAccessService.isAdmin(jwt)).thenReturn(false);
-    when(clubAccessService.isCoordinationClubPresident(jwt)).thenReturn(true);
+  void getEndpoints_coordinationPresidentSeesAll() {
+    when(clubAccessService.isAdmin()).thenReturn(false);
+    when(clubAccessService.isCoordinationClubPresident()).thenReturn(true);
     when(endpointRepository.findAll()).thenReturn(List.of(nonPrivileged, privileged));
 
-    List<EndpointResponse> result = endpointService.list(jwt);
+    List<EndpointResponse> result = endpointService.getEndpoints();
 
     assertEquals(2, result.size());
     verify(endpointRepository).findAll();
   }
 
   @Test
-  void list_regularMemberSeesOnlyNonPrivileged() {
-    Jwt jwt = mock(Jwt.class);
-    when(clubAccessService.isAdmin(jwt)).thenReturn(false);
-    when(clubAccessService.isCoordinationClubPresident(jwt)).thenReturn(false);
+  void getEndpoints_regularMemberSeesOnlyNonPrivileged() {
+    when(clubAccessService.isAdmin()).thenReturn(false);
+    when(clubAccessService.isCoordinationClubPresident()).thenReturn(false);
     when(endpointRepository.findByPrivilegedFalse()).thenReturn(List.of(nonPrivileged));
 
-    List<EndpointResponse> result = endpointService.list(jwt);
+    List<EndpointResponse> result = endpointService.getEndpoints();
 
     assertEquals(1, result.size());
     assertEquals("manage_events", result.get(0).name());

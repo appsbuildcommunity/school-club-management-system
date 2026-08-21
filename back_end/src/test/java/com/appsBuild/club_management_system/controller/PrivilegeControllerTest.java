@@ -77,13 +77,12 @@ class PrivilegeControllerTest {
   @Test
   void updateProfile_returns200() throws Exception {
     ClubProfileResponse resp = new ClubProfileResponse(1L, "Updated", List.of("manage_events"));
-    when(clubProfileService.updateProfile(eq(1L), eq(1L), any(ClubProfileRequest.class), eq(false)))
+    when(clubProfileService.updateProfile(eq(1L), eq(1L), any(ClubProfileRequest.class)))
         .thenReturn(resp);
 
     mockMvc
         .perform(
             put("/api/clubs/1/profiles/1")
-                .param("sync", "false")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
@@ -97,9 +96,9 @@ class PrivilegeControllerTest {
   @Test
   void deleteProfile_returns204() throws Exception {
     mockMvc
-        .perform(delete("/api/clubs/1/profiles/1").param("sync", "true"))
+        .perform(delete("/api/clubs/1/profiles/1"))
         .andExpect(status().isNoContent());
-    verify(clubProfileService).deleteProfile(1L, 1L, true);
+    verify(clubProfileService).deleteProfile(1L, 1L);
   }
 
   // ── listProfiles ────────────────────────────────────────────────────
@@ -161,7 +160,7 @@ class PrivilegeControllerTest {
             50L,
             List.of(
                 new MemberPrivilege(
-                    200L, "manage_events", new Date(), List.of(new SourceProfile(10L, "P")))));
+                    "manage_events", new Date(), List.of(new SourceProfile(10L, "P")))));
     when(clubProfileService.getMemberPrivileges(1L, 50L)).thenReturn(resp);
 
     mockMvc

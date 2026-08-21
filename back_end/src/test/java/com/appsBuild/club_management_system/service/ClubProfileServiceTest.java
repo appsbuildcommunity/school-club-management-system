@@ -33,9 +33,8 @@ class ClubProfileServiceTest {
   @Mock private ClubMembershipRepository clubMembershipRepository;
   @Mock private ClubProfileRepository clubProfileRepository;
   @Mock private ClubMembershipProfileRepository clubMembershipProfileRepository;
+  @Mock private ClubMembershipEndpointRepository clubMembershipEndpointRepository;
   @Mock private EndpointRepository endpointRepository;
-  @Mock private AssistantMemberPrivilegeRepository assistantMemberPrivilegeRepository;
-  @Mock private RoleGrantRepository roleGrantRepository;
   @Mock private ClubAccessService clubAccessService;
 
   @InjectMocks private ClubProfileService clubProfileService;
@@ -80,7 +79,8 @@ class ClubProfileServiceTest {
             });
 
     ClubProfileResponse resp =
-        clubProfileService.createProfile(1L, new ClubProfileRequest("Event Manager", List.of("manage_events")));
+        clubProfileService.createProfile(
+            1L, new ClubProfileRequest("Event Manager", List.of("manage_events")));
 
     assertEquals(100L, resp.profileId());
     assertEquals("Event Manager", resp.name());
@@ -94,7 +94,9 @@ class ClubProfileServiceTest {
 
     assertThrows(
         ApplicationException.class,
-        () -> clubProfileService.createProfile(1L, new ClubProfileRequest("  ", List.of())));
+        () ->
+            clubProfileService.createProfile(
+                1L, new ClubProfileRequest("  ", List.of())));
   }
 
   @Test
@@ -103,7 +105,9 @@ class ClubProfileServiceTest {
 
     assertThrows(
         ApplicationException.class,
-        () -> clubProfileService.createProfile(1L, new ClubProfileRequest(null, List.of())));
+        () ->
+            clubProfileService.createProfile(
+                1L, new ClubProfileRequest(null, List.of())));
   }
 
   @Test
@@ -112,13 +116,15 @@ class ClubProfileServiceTest {
 
     assertThrows(
         NotFoundException.class,
-        () -> clubProfileService.createProfile(99L, new ClubProfileRequest("X", List.of())));
+        () ->
+            clubProfileService.createProfile(
+                99L, new ClubProfileRequest("X", List.of())));
   }
 
   // ── updateProfile ───────────────────────────────────────────────────
 
   @Test
-  void updateProfile_noSync() {
+  void updateProfile_success() {
     ClubProfile profile =
         ClubProfile.builder()
             .clubProfileId(100L)
@@ -131,86 +137,24 @@ class ClubProfileServiceTest {
 
     ClubProfileResponse resp =
         clubProfileService.updateProfile(
-            1L, 100L, new ClubProfileRequest("New Name", List.of("manage_posts")), false);
+            1L, 100L, new ClubProfileRequest("New Name", List.of("manage_posts")));
 
     assertEquals("New Name", resp.name());
     assertEquals(List.of("manage_posts"), resp.endpoints());
     verify(clubProfileRepository).save(profile);
-    verify(clubMembershipProfileRepository, never()).findByClubProfile_ClubProfileId(anyLong());
-  }
-
-  @Test
-  void updateProfile_withSync_propagates() {
-    ClubProfile profile =
-        ClubProfile.builder()
-            .clubProfileId(100L)
-            .name("Old")
-            .club(club)
-            .endpoints(List.of(endpointA))
-            .build();
-    User user = User.builder().userId(1L).build();
-    ClubMembership membership =
-        ClubMembership.builder().membershipId(50L).club(club).user(user).build();
-    ClubMembershipProfile holder =
-        ClubMembershipProfile.builder().clubMembership(membership).clubProfile(profile).build();
-    when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
-    when(endpointRepository.findByName("manage_posts")).thenReturn(Optional.of(endpointB));
-    when(clubMembershipProfileRepository.findByClubProfile_ClubProfileId(100L))
-        .thenReturn(List.of(holder));
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_posts"))
-        .thenReturn(Optional.empty());
-    when(assistantMemberPrivilegeRepository.save(any(AssistantMemberPrivilege.class)))
-        .thenAnswer(
-            inv -> {
-              AssistantMemberPrivilege p = inv.getArgument(0);
-              p.setPrivilegeId(300L);
-              return p;
-            });
-    when(roleGrantRepository.existsByClubProfile_ClubProfileIdAndGrant_PrivilegeId(anyLong(), anyLong()))
-        .thenReturn(false);
-
-    clubProfileService.updateProfile(
-        1L, 100L, new ClubProfileRequest("New", List.of("manage_posts")), true);
-
-    verify(clubMembershipProfileRepository).findByClubProfile_ClubProfileId(100L);
   }
 
   // ── deleteProfile ───────────────────────────────────────────────────
 
   @Test
-  void deleteProfile_syncTrue_deletesOrphans() {
+  void deleteProfile_success() {
     ClubProfile profile =
         ClubProfile.builder().clubProfileId(100L).club(club).name("P").build();
-    AssistantMemberPrivilege grant =
-        AssistantMemberPrivilege.builder().privilegeId(200L).build();
-    RoleGrant link = RoleGrant.builder().grant(grant).clubProfile(profile).build();
     when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
-    when(roleGrantRepository.findByClubProfile_ClubProfileId(100L)).thenReturn(List.of(link));
-    when(roleGrantRepository.findByGrant_PrivilegeId(200L)).thenReturn(List.of());
 
-    clubProfileService.deleteProfile(1L, 100L, true);
+    clubProfileService.deleteProfile(1L, 100L);
 
-    verify(assistantMemberPrivilegeRepository).deleteById(200L);
-    verify(clubProfileRepository).delete(profile);
-  }
-
-  @Test
-  void deleteProfile_syncFalse_convertsToIndividual() {
-    ClubProfile profile =
-        ClubProfile.builder().clubProfileId(100L).club(club).name("P").build();
-    AssistantMemberPrivilege grant =
-        AssistantMemberPrivilege.builder().privilegeId(200L).build();
-    RoleGrant link = RoleGrant.builder().grant(grant).clubProfile(profile).build();
-    when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
-    when(roleGrantRepository.findByClubProfile_ClubProfileId(100L)).thenReturn(List.of(link));
-    when(roleGrantRepository.findByGrant_PrivilegeId(200L)).thenReturn(List.of());
-    when(assistantMemberPrivilegeRepository.findById(200L)).thenReturn(Optional.of(grant));
-
-    clubProfileService.deleteProfile(1L, 100L, false);
-
-    verify(assistantMemberPrivilegeRepository, never()).deleteById(anyLong());
-    verify(roleGrantRepository).save(argThat(rg -> rg.getClubProfile() == null));
+    verify(clubMembershipProfileRepository).deleteByClubProfile_ClubProfileId(100L);
     verify(clubProfileRepository).delete(profile);
   }
 
@@ -256,31 +200,52 @@ class ClubProfileServiceTest {
             .build();
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
-        ClubMembership.builder().membershipId(50L).club(club).user(user).clubRole(ClubRole.ASSISTANT_MEMBER).build();
+        ClubMembership.builder()
+            .membershipId(50L)
+            .club(club)
+            .user(user)
+            .clubRole(ClubRole.ASSISTANT_MEMBER)
+            .build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
     when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
     when(clubMembershipProfileRepository
             .existsByClubMembership_MembershipIdAndClubProfile_ClubProfileId(50L, 100L))
         .thenReturn(false);
-    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_events"))
-        .thenReturn(Optional.empty());
-    when(assistantMemberPrivilegeRepository.save(any(AssistantMemberPrivilege.class)))
-        .thenAnswer(
-            inv -> {
-              AssistantMemberPrivilege p = inv.getArgument(0);
-              p.setPrivilegeId(300L);
-              return p;
-            });
-    when(roleGrantRepository.existsByClubProfile_ClubProfileIdAndGrant_PrivilegeId(anyLong(), anyLong()))
-        .thenReturn(false);
+
+    clubProfileService.assignPrivileges(
+        1L, 50L, new AssignPrivilegesRequest(100L, List.of("manage_events", "manage_posts")));
+
+    verify(clubMembershipProfileRepository).save(any(ClubMembershipProfile.class));
+    verify(clubMembershipEndpointRepository, never()).save(any());
+  }
+
+  @Test
+  void assignPrivileges_withProfile_alreadyAssigned_skips() {
+    ClubProfile profile =
+        ClubProfile.builder()
+            .clubProfileId(100L)
+            .name("P")
+            .club(club)
+            .endpoints(List.of(endpointA))
+            .build();
+    User user = User.builder().userId(1L).build();
+    ClubMembership membership =
+        ClubMembership.builder()
+            .membershipId(50L)
+            .club(club)
+            .user(user)
+            .clubRole(ClubRole.ASSISTANT_MEMBER)
+            .build();
+    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
+    when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
+    when(clubMembershipProfileRepository
+            .existsByClubMembership_MembershipIdAndClubProfile_ClubProfileId(50L, 100L))
+        .thenReturn(true);
 
     clubProfileService.assignPrivileges(
         1L, 50L, new AssignPrivilegesRequest(100L, List.of("manage_events")));
 
-    verify(clubMembershipProfileRepository).save(any(ClubMembershipProfile.class));
-    verify(roleGrantRepository, atLeastOnce()).save(any(RoleGrant.class));
+    verify(clubMembershipProfileRepository, never()).save(any());
   }
 
   @Test
@@ -294,7 +259,12 @@ class ClubProfileServiceTest {
             .build();
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
-        ClubMembership.builder().membershipId(50L).club(club).user(user).clubRole(ClubRole.ASSISTANT_MEMBER).build();
+        ClubMembership.builder()
+            .membershipId(50L)
+            .club(club)
+            .user(user)
+            .clubRole(ClubRole.ASSISTANT_MEMBER)
+            .build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
     when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
 
@@ -311,123 +281,149 @@ class ClubProfileServiceTest {
   void assignPrivileges_individual() {
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
-        ClubMembership.builder().membershipId(50L).club(club).user(user).clubRole(ClubRole.ASSISTANT_MEMBER).build();
+        ClubMembership.builder()
+            .membershipId(50L)
+            .club(club)
+            .user(user)
+            .clubRole(ClubRole.ASSISTANT_MEMBER)
+            .build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
     when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_events"))
-        .thenReturn(Optional.empty());
-    when(assistantMemberPrivilegeRepository.save(any(AssistantMemberPrivilege.class)))
-        .thenAnswer(
-            inv -> {
-              AssistantMemberPrivilege p = inv.getArgument(0);
-              p.setPrivilegeId(300L);
-              return p;
-            });
-    when(roleGrantRepository.existsByGrant_PrivilegeIdAndClubProfileIsNull(anyLong()))
+    when(clubMembershipEndpointRepository
+            .existsByClubMembership_MembershipIdAndEndpoint_Name(50L, "manage_events"))
         .thenReturn(false);
 
     clubProfileService.assignPrivileges(
         1L, 50L, new AssignPrivilegesRequest(null, List.of("manage_events")));
 
+    verify(clubMembershipEndpointRepository).save(any(ClubMembershipEndpoint.class));
     verify(clubMembershipProfileRepository, never()).save(any());
-    verify(roleGrantRepository, atLeastOnce()).save(any(RoleGrant.class));
+  }
+
+  @Test
+  void assignPrivileges_individual_alreadyGranted_skips() {
+    User user = User.builder().userId(1L).build();
+    ClubMembership membership =
+        ClubMembership.builder()
+            .membershipId(50L)
+            .club(club)
+            .user(user)
+            .clubRole(ClubRole.ASSISTANT_MEMBER)
+            .build();
+    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
+    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
+    when(clubMembershipEndpointRepository
+            .existsByClubMembership_MembershipIdAndEndpoint_Name(50L, "manage_events"))
+        .thenReturn(true);
+
+    clubProfileService.assignPrivileges(
+        1L, 50L, new AssignPrivilegesRequest(null, List.of("manage_events")));
+
+    verify(clubMembershipEndpointRepository, never()).save(any());
   }
 
   // ── unassignProfile ─────────────────────────────────────────────────
 
   @Test
-  void unassignProfile_deletesLinksAndOrphans() {
+  void unassignProfile_success() {
     ClubProfile profile =
         ClubProfile.builder().clubProfileId(100L).club(club).build();
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
         ClubMembership.builder().membershipId(50L).club(club).user(user).build();
-    AssistantMemberPrivilege grant =
-        AssistantMemberPrivilege.builder().privilegeId(200L).build();
-    RoleGrant link = RoleGrant.builder().grant(grant).clubProfile(profile).build();
     when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(roleGrantRepository
-            .findByGrant_ClubMembership_MembershipIdAndClubProfile_ClubProfileId(50L, 100L))
-        .thenReturn(List.of(link));
-    when(roleGrantRepository.findByGrant_PrivilegeId(200L)).thenReturn(List.of());
 
     clubProfileService.unassignProfile(1L, 50L, 100L);
 
-    verify(roleGrantRepository)
-        .deleteByGrant_ClubMembership_MembershipIdAndClubProfile_ClubProfileId(50L, 100L);
     verify(clubMembershipProfileRepository)
         .deleteByClubMembership_MembershipIdAndClubProfile_ClubProfileId(50L, 100L);
-    verify(assistantMemberPrivilegeRepository).deleteById(200L);
   }
 
   // ── revokePrivilege ─────────────────────────────────────────────────
 
   @Test
-  void revokePrivilege_removesNullProfileLinksAndOrphans() {
+  void revokePrivilege_success() {
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
         ClubMembership.builder().membershipId(50L).club(club).user(user).build();
-    AssistantMemberPrivilege grant =
-        AssistantMemberPrivilege.builder().privilegeId(200L).endpoint(endpointA).build();
-    RoleGrant nullProfileLink = RoleGrant.builder().grant(grant).clubProfile(null).build();
-    RoleGrant profileLink = RoleGrant.builder().grant(grant).clubProfile(mock(ClubProfile.class)).build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_events"))
-        .thenReturn(Optional.of(grant));
-    when(roleGrantRepository.findByGrant_PrivilegeId(200L))
-        .thenReturn(List.of(nullProfileLink, profileLink))
-        .thenReturn(List.of());
 
     clubProfileService.revokePrivilege(1L, 50L, "manage_events");
 
-    verify(roleGrantRepository).delete(nullProfileLink);
-    verify(roleGrantRepository, never()).delete(profileLink);
-    verify(assistantMemberPrivilegeRepository).deleteById(200L);
-  }
-
-  @Test
-  void revokePrivilege_grantNotFound_noException() {
-    User user = User.builder().userId(1L).build();
-    ClubMembership membership =
-        ClubMembership.builder().membershipId(50L).club(club).user(user).build();
-    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_events"))
-        .thenReturn(Optional.empty());
-
-    assertDoesNotThrow(() -> clubProfileService.revokePrivilege(1L, 50L, "manage_events"));
+    verify(clubMembershipEndpointRepository)
+        .deleteByClubMembership_MembershipIdAndEndpoint_Name(50L, "manage_events");
   }
 
   // ── getMemberPrivileges ─────────────────────────────────────────────
 
   @Test
-  void getMemberPrivileges_groupsByGrant() {
+  void getMemberPrivileges_mergesBothSources() {
     User user = User.builder().userId(1L).build();
     ClubMembership membership =
         ClubMembership.builder().membershipId(50L).club(club).user(user).build();
-    AssistantMemberPrivilege grant =
-        AssistantMemberPrivilege.builder()
-            .privilegeId(200L)
+    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
+
+    ClubMembershipEndpoint cme =
+        ClubMembershipEndpoint.builder()
             .endpoint(endpointA)
             .grantedDate(new Date())
             .build();
+    when(clubMembershipEndpointRepository.findByClubMembership_MembershipId(50L))
+        .thenReturn(List.of(cme));
+
     ClubProfile profile =
-        ClubProfile.builder().clubProfileId(100L).name("P").club(club).build();
-    RoleGrant link1 = RoleGrant.builder().grant(grant).clubProfile(profile).build();
-    RoleGrant link2 = RoleGrant.builder().grant(grant).clubProfile(null).build();
-    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(roleGrantRepository.findByGrant_ClubMembership_MembershipId(50L))
-        .thenReturn(List.of(link1, link2));
+        ClubProfile.builder().clubProfileId(100L).name("P").club(club).endpoints(List.of(endpointB)).build();
+    ClubMembershipProfile cmp =
+        ClubMembershipProfile.builder()
+            .clubMembership(membership)
+            .clubProfile(profile)
+            .assignedDate(new Date())
+            .build();
+    when(clubMembershipProfileRepository.findByClubMembership_MembershipId(50L))
+        .thenReturn(List.of(cmp));
 
     MemberPrivilegesResponse resp = clubProfileService.getMemberPrivileges(1L, 50L);
 
     assertEquals(50L, resp.membershipId());
+    assertEquals(2, resp.privileges().size());
+  }
+
+  @Test
+  void getMemberPrivileges_deduplicatesEndpoint() {
+    User user = User.builder().userId(1L).build();
+    ClubMembership membership =
+        ClubMembership.builder().membershipId(50L).club(club).user(user).build();
+    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
+
+    ClubMembershipEndpoint cme =
+        ClubMembershipEndpoint.builder()
+            .endpoint(endpointA)
+            .grantedDate(new Date())
+            .build();
+    when(clubMembershipEndpointRepository.findByClubMembership_MembershipId(50L))
+        .thenReturn(List.of(cme));
+
+    ClubProfile profile =
+        ClubProfile.builder()
+            .clubProfileId(100L)
+            .name("P")
+            .club(club)
+            .endpoints(List.of(endpointA))
+            .build();
+    ClubMembershipProfile cmp =
+        ClubMembershipProfile.builder()
+            .clubMembership(membership)
+            .clubProfile(profile)
+            .assignedDate(new Date())
+            .build();
+    when(clubMembershipProfileRepository.findByClubMembership_MembershipId(50L))
+        .thenReturn(List.of(cmp));
+
+    MemberPrivilegesResponse resp = clubProfileService.getMemberPrivileges(1L, 50L);
+
     assertEquals(1, resp.privileges().size());
     assertEquals("manage_events", resp.privileges().get(0).endpointName());
-    assertEquals(2, resp.privileges().get(0).sources().size());
   }
 
   // ── membership not in club ──────────────────────────────────────────
@@ -466,33 +462,5 @@ class ClubProfileServiceTest {
         () ->
             clubProfileService.assignPrivileges(
                 1L, 50L, new AssignPrivilegesRequest(null, List.of("manage_events"))));
-  }
-
-  // ── duplicate from same source ──────────────────────────────────────
-
-  @Test
-  void assignPrivileges_duplicateFromSameSource_skips() {
-    User user = User.builder().userId(1L).build();
-    ClubMembership membership =
-        ClubMembership.builder()
-            .membershipId(50L)
-            .club(club)
-            .user(user)
-            .clubRole(ClubRole.ASSISTANT_MEMBER)
-            .build();
-    when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
-    AssistantMemberPrivilege existingGrant =
-        AssistantMemberPrivilege.builder().privilegeId(200L).endpoint(endpointA).build();
-    when(assistantMemberPrivilegeRepository.findByClubMembership_MembershipIdAndEndpoint_Name(
-            50L, "manage_events"))
-        .thenReturn(Optional.of(existingGrant));
-    when(roleGrantRepository.existsByGrant_PrivilegeIdAndClubProfileIsNull(200L)).thenReturn(true);
-
-    clubProfileService.assignPrivileges(
-        1L, 50L, new AssignPrivilegesRequest(null, List.of("manage_events")));
-
-    verify(assistantMemberPrivilegeRepository, never()).save(any());
-    verify(roleGrantRepository, never()).save(any());
   }
 }
