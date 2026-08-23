@@ -204,6 +204,9 @@ public class ClubProfileService {
   }
 
   private void validateSubset(List<String> requestedEndpoints, ClubProfile profile) {
+    if (requestedEndpoints == null) {
+      return;
+    }
     Set<String> templateEndpoints =
         profile.getEndpoints().stream().map(Endpoint::getName).collect(Collectors.toSet());
     for (String name : requestedEndpoints) {

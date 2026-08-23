@@ -7,6 +7,7 @@ import com.appsBuild.club_management_system.dto.club.ClubProfileResponse;
 import com.appsBuild.club_management_system.dto.privilege.MemberPrivilegesResponse;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.service.ClubProfileService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class PrivilegeController {
   @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'manage_profiles')")
   public ResponseEntity<ClubProfileResponse> createProfile(
       @PathVariable Long clubId,
-      @RequestBody ClubProfileRequest request) {
+      @Valid @RequestBody ClubProfileRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(clubProfileService.createProfile(clubId, request));
   }
@@ -47,7 +48,7 @@ public class PrivilegeController {
   public ResponseEntity<ClubProfileResponse> updateProfile(
       @PathVariable Long clubId,
       @PathVariable Long profileId,
-      @RequestBody ClubProfileRequest request) {
+      @Valid @RequestBody ClubProfileRequest request) {
     return ResponseEntity.ok(clubProfileService.updateProfile(clubId, profileId, request));
   }
 
@@ -84,7 +85,7 @@ public class PrivilegeController {
   public ResponseEntity<Void> assignPrivileges(
       @PathVariable Long clubId,
       @PathVariable Long membershipId,
-      @RequestBody AssignPrivilegesRequest request) {
+      @Valid @RequestBody AssignPrivilegesRequest request) {
     clubProfileService.assignPrivileges(clubId, membershipId, request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }

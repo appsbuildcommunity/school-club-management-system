@@ -111,6 +111,15 @@ public class ClubAccessService {
     return hasProfileEndpoint(mid, endpointName);
   }
 
+  /**
+   * True if the caller may use the given privileged endpoint. Privileged endpoints live in the
+   * coordination club only, so the check is scoped to it: ADMIN always wins; otherwise the caller
+   * must be its president or hold a grant for the endpoint.
+   */
+  public boolean hasCoordinationEndpoint(String endpointName) {
+    return hasEndpoint(coordinationClubId(), endpointName);
+  }
+
   /** True if the caller is the coordination club president (or ADMIN). */
   public boolean isCoordinationClubPresident() {
     if (isAdmin()) {

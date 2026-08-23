@@ -105,11 +105,34 @@ interface Member {
   username: string
   firstName: string
   lastName: string
-  profilePicture?: {
-    url: string
-  }
-  role: ClubRole
-  roleDescription?: string
+  profilePictureUrl?: string // presigned S3 GET URL (expires after 15 minutes)
+  role: ClubRole             // no roleDescription returned by the current API
+}
+
+// Club CRUD
+interface ClubRequest {
+  clubName: string            // required, max 100 chars (@NotBlank @Size(max=100))
+  clubFullName?: string       // max 200 chars
+  description?: string        // max 1000 chars
+  presidentUsername?: string  // optional first president, valid on both create endpoints
+}
+
+interface PresidentRequest {
+  presidentUsername: string   // required (@NotBlank)
+}
+
+interface ClubResponse {
+  clubId: number
+  clubName: string
+  clubFullName?: string
+  description?: string
+  isCoordinationClub: boolean
+  profilePictureUrl?: string // presigned S3 GET URL (expires after 15 minutes)
+  memberCount: number
+}
+
+interface ClubDetailResponse extends ClubResponse {
+  staff: Member[]            // CLUB_PRESIDENT + ASSISTANT_MEMBER only
 }
 
 // Endpoint (grantable API capability)
@@ -291,28 +314,43 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 ## Club Endpoints
 
+Club CRUD and president management. All mutation endpoints below register as grantable endpoints in the `MANAGE_CLUBS` category with `privileged = true`, so — per the privilege model — they can only ever be granted inside the **coordination club** (the "clubs responsible" concept). `ADMIN` bypasses all checks.
+
 ### List All Clubs
 
 **GET** `/api/clubs`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Bearer token (any authenticated user)
 
 **Response:** `200 OK`
 
 ```json
-{
-  "clubs": [
-    {
-      "clubName": "string",
-      "description": "string",
-      "profilePicture": {
-        "url": "string"
-      },
-      "memberCount": 25
-    }
-  ]
-}
+[
+  {
+    "clubId": 1,
+    "clubName": "coordination",
+    "clubFullName": "School Coordination",
+    "description": "Clubs coordination hub",
+    "isCoordinationClub": true,
+    "profilePictureUrl": null,
+    "memberCount": 3
+  },
+  {
+    "clubId": 2,
+    "clubName": "chess-club",
+    "clubFullName": "Chess Lovers",
+    "description": "Weekly chess meetings",
+    "isCoordinationClub": false,
+    "profilePictureUrl": "https://s3.../clubs/2/picture",
+    "memberCount": 25
+  }
+]
 ```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
 
 ---
 
@@ -320,21 +358,76 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **GET** `/api/clubs/{clubName}`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Bearer token (any authenticated user)
+
+Returns full club info. `staff` contains only the leadership (`CLUB_PRESIDENT` + `ASSISTANT_MEMBER` roles), while `memberCount` covers all members.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "clubName": "string",
-  "description": "string",
-  "profilePicture": {
-    "url": "string"
-  },
-  "staff": [Member], // See Type Definitions
-  "memberCount": 25
+  "clubId": 2,
+  "clubName": "chess-club",
+  "clubFullName": "Chess Lovers",
+  "description": "Weekly chess meetings",
+  "isCoordinationClub": false,
+  "profilePictureUrl": "https://s3.../clubs/2/picture",
+  "memberCount": 25,
+  "staff": [
+    {
+      "username": "alice",
+      "firstName": "Alice",
+      "lastName": "Smith",
+      "profilePictureUrl": "https://s3.../users/alice/picture",
+      "role": "CLUB_PRESIDENT"
+    },
+    {
+      "username": "bob",
+      "firstName": "Bob",
+      "lastName": "Jones",
+      "profilePictureUrl": null,
+      "role": "ASSISTANT_MEMBER"
+    }
+  ]
 }
 ```
+
+**Response Codes:**
+
+- `200 OK` — club found
+- `401 Unauthorized` — missing/invalid token
+- `404 Not Found` — no club with that name
+
+---
+
+### Create Coordination Club
+
+**POST** `/api/clubs/coordination`
+
+**Authorization:** `ADMIN` only (`hasRole('ADMIN')`) — not a grantable endpoint
+
+Bootstraps the single coordination club (`isCoordinationClub = true`). This is a one-time setup call; it fails with `409` if the coordination club already exists. Like **Create Club**, it may assign an optional first president via `presidentUsername` — useful since only `ADMIN` can change the coordination president later.
+
+**Request Body:** (`ClubRequest`)
+
+```json
+{
+  "clubName": "coordination",
+  "clubFullName": "School Coordination",
+  "description": "Clubs coordination hub"
+}
+```
+
+**Response:** `201 Created` (a `ClubResponse` body)
+
+**Response Codes:**
+
+- `201 Created` — coordination club created
+- `400 Bad Request` — validation failed (blank/oversized fields)
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller is not an `ADMIN`
+- `404 Not Found` — `presidentUsername` does not match any user
+- `409 Conflict` — coordination club already exists, or another club already uses the name
 
 ---
 
@@ -342,20 +435,82 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **POST** `/api/clubs`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** `ADMIN` or `create_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
 
-**Request Body:**
+Creates a regular club. If `presidentUsername` is provided, that user must exist and becomes the club's first member with the `CLUB_PRESIDENT` role.
+
+**Request Body:** (`ClubRequest`)
 
 ```json
 {
-  "clubName": "string",
-  "clubFullName": "string",
-  "description": "string",
-  "presidentUsername": "string" // optional
+  "clubName": "chess-club",
+  "clubFullName": "Chess Lovers",
+  "description": "Weekly chess meetings",
+  "presidentUsername": "alice"
 }
 ```
 
-**Response:** `201 Created`
+**Response:** `201 Created` (a `ClubResponse` body)
+
+**Response Codes:**
+
+- `201 Created` — club created
+- `400 Bad Request` — validation failed (blank/oversized fields)
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `create_club` privileged endpoint
+- `404 Not Found` — `presidentUsername` does not match any user
+- `409 Conflict` — a club with the same `clubName` already exists
+
+---
+
+### Update Club
+
+**PUT** `/api/clubs/{clubId}`
+
+**Authorization:** `ADMIN` or `update_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
+
+Updates the club's name, full name and description. The coordination club can be updated like any other club, but its name must stay unique.
+
+**Request Body:** (`ClubRequest`; `presidentUsername` ignored here)
+
+```json
+{
+  "clubName": "chess-club-new",
+  "clubFullName": "Chess Lovers Renamed",
+  "description": "New description"
+}
+```
+
+**Response:** `200 OK` (the updated `ClubResponse`)
+
+**Response Codes:**
+
+- `200 OK` — club updated
+- `400 Bad Request` — validation failed
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `update_club` privileged endpoint
+- `404 Not Found` — club not found
+- `409 Conflict` — another club already uses the new `clubName`
+
+---
+
+### Delete Club
+
+**DELETE** `/api/clubs/{clubId}`
+
+**Authorization:** `ADMIN` or `delete_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
+
+Hard-deletes the club. All dependent rows (memberships, join requests, posts, events, profiles, membership history) are removed by database-level `ON DELETE CASCADE` constraints. **The coordination club cannot be deleted** (`409`).
+
+**Response:** `204 No Content`
+
+**Response Codes:**
+
+- `204 No Content` — club deleted
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `delete_club` privileged endpoint
+- `404 Not Found` — club not found
+- `409 Conflict` — the target is the coordination club
 
 ---
 
@@ -363,17 +518,33 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **PUT** `/api/clubs/{clubId}/president`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** `ADMIN` or `change_club_president` grantable endpoint (`MANAGE_CLUBS`, privileged)
 
-**Request Body:**
+Hands the presidency to an existing member of the club:
+
+- The target user must already be a member of the club (`404` otherwise).
+- If the target is already president → `409`.
+- Targeting the **coordination club** requires `ADMIN` (`403` for anyone else) — only the realm ADMIN can swap the person who controls all privileged endpoint grants.
+- The outgoing president is demoted to `MEMBER`. Nothing is written to the membership-history table.
+
+**Request Body:** (`PresidentRequest`)
 
 ```json
 {
-  "presidentUsername": "string"
+  "presidentUsername": "bob"
 }
 ```
 
-**Response:** `200 OK`
+**Response:** `200 OK` (empty body)
+
+**Response Codes:**
+
+- `200 OK` — president changed
+- `400 Bad Request` — blank `presidentUsername`
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `change_club_president` privileged endpoint
+- `404 Not Found` — club not found, or the user is not a member of this club
+- `409 Conflict` — the user is already the president of this club
 
 ---
 
@@ -1401,8 +1572,26 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
     "privileged": false
   },
   {
-    "name": "manage_club_settings",
-    "description": "Manage club settings and coordination club status",
+    "name": "create_club",
+    "description": "Create a new club",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "update_club",
+    "description": "Update a club's information",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "delete_club",
+    "description": "Delete a club",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "change_club_president",
+    "description": "Change the president of a club",
     "category": "MANAGE_CLUBS",
     "privileged": true
   }
@@ -1713,15 +1902,22 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
 
 ## Error Response Format
 
+All error responses share a flat shape produced by the global exception handler:
+
 ```json
 {
-  "error": {
-    "code": "string",
-    "message": "string",
-    "details": {} // optional
-  }
+  "code": "CONFLICT",
+  "message": "Club name already taken: chess-club"
 }
 ```
+
+| `code` | HTTP status | Triggered by |
+|--------|-------------|--------------|
+| `NOT_FOUND` | 404 | `NotFoundException`, JPA `EntityNotFoundException` |
+| `CONFLICT` | 409 | `ConflictException` (duplicate name, protected coordination club, ...) |
+| `FORBIDDEN` | 403 | Spring Security `AccessDeniedException` |
+| `BAD_REQUEST` | 400 | `ApplicationException`, bean-validation failures, malformed JSON, bad path/param types |
+| `INTERNAL_ERROR` | 500 | anything unexpected (message is generic) |
 
 ---
 
@@ -1736,4 +1932,5 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
 5. **Assistant Privileges**: Customizable per club
 6. **Public Endpoints**: Also accessible at `/api/public/*` routes (e.g., `/api/public/posts`)
 7. **File Uploads**: All file uploads use a presigned S3 URL flow — request a PUT URL via `/api/storage/upload/*`, upload directly to S3, then confirm via `POST /api/storage/verify`. See the **Storage Endpoints** section for full details.
-8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**.
+8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**. This applies to every `profilePictureUrl` returned by the club CRUD endpoints.
+9. **Coordination Club Bootstrap**: The coordination club is created exactly once by an `ADMIN` via `POST /api/clubs/coordination`. It can be renamed/described like any other club but is never deletable, and it is the only club where privileged (`MANAGE_CLUBS`) endpoints can be granted. Only `ADMIN` can change its president.
