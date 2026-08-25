@@ -81,6 +81,8 @@ class ClubServiceTest {
               return c;
             });
     when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(10L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(false);
     when(clubMembershipRepository.save(any(ClubMembership.class)))
         .thenAnswer(inv -> inv.getArgument(0));
     when(clubMembershipRepository.countByClub_ClubId(1L)).thenReturn(1L);
@@ -131,6 +133,8 @@ class ClubServiceTest {
               return c;
             });
     when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(10L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(false);
     when(clubMembershipRepository.save(any(ClubMembership.class)))
         .thenAnswer(inv -> inv.getArgument(0));
     when(clubMembershipRepository.countByClub_ClubId(2L)).thenReturn(1L);
@@ -268,6 +272,8 @@ class ClubServiceTest {
     when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
     when(clubMembershipRepository.findByUser_UserIdAndClub_ClubId(11L, 2L))
         .thenReturn(Optional.of(target));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(11L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(false);
     when(clubMembershipRepository.findByClub_ClubIdAndClubRole(2L, ClubRole.CLUB_PRESIDENT))
         .thenReturn(List.of(current));
 
@@ -350,6 +356,8 @@ class ClubServiceTest {
     when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
     when(clubMembershipRepository.findByUser_UserIdAndClub_ClubId(11L, 1L))
         .thenReturn(Optional.of(target));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(11L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(false);
     when(clubMembershipRepository.findByClub_ClubIdAndClubRole(1L, ClubRole.CLUB_PRESIDENT))
         .thenReturn(List.of(current));
 
@@ -357,5 +365,49 @@ class ClubServiceTest {
 
     assertEquals(ClubRole.MEMBER, current.getClubRole());
     assertEquals(ClubRole.CLUB_PRESIDENT, target.getClubRole());
+  }
+
+  @Test
+  void changePresident_targetIsPresidentOfAnotherClub_throwsConflict() {
+    Club club = Club.builder().clubId(2L).clubName("Chess").build();
+    User bob = User.builder().userId(11L).username("bob").build();
+    ClubMembership target =
+        ClubMembership.builder()
+            .membershipId(101L)
+            .user(bob)
+            .club(club)
+            .clubRole(ClubRole.MEMBER)
+            .build();
+
+    when(clubRepository.findById(2L)).thenReturn(Optional.of(club));
+    when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
+    when(clubMembershipRepository.findByUser_UserIdAndClub_ClubId(11L, 2L))
+        .thenReturn(Optional.of(target));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(11L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(true);
+
+    assertThrows(
+        ConflictException.class,
+        () -> clubService.changePresident(2L, new PresidentRequest("bob")));
+  }
+
+  @Test
+  void createClub_withUserWhoIsAlreadyPresident_throwsConflict() {
+    User alice = User.builder().userId(10L).username("alice").build();
+    when(clubRepository.findByClubName("Chess Club")).thenReturn(Optional.empty());
+    when(clubRepository.save(any(Club.class)))
+        .thenAnswer(
+            inv -> {
+              Club c = inv.getArgument(0);
+              c.setClubId(2L);
+              return c;
+            });
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(10L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(true);
+
+    assertThrows(
+        ConflictException.class,
+        () -> clubService.createClub(new ClubRequest("Chess Club", null, null, "alice")));
   }
 }

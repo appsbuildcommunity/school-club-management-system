@@ -22,4 +22,7 @@ public interface ClubMembershipRepository extends JpaRepository<ClubMembership, 
 
   // Finds all memberships of a club holding a specific role (e.g. current presidents).
   List<ClubMembership> findByClub_ClubIdAndClubRole(Long clubId, ClubRole role);
+
+  // Checks whether a user holds a specific role in any club.
+  boolean existsByUser_UserIdAndClubRole(Long userId, ClubRole role);
 }

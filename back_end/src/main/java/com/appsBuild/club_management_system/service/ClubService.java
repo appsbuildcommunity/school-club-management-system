@@ -134,6 +134,10 @@ public class ClubService {
     if (target.getClubRole() == ClubRole.CLUB_PRESIDENT) {
       throw new ConflictException("User is already the president of this club");
     }
+    if (clubMembershipRepository.existsByUser_UserIdAndClubRole(
+        president.getUserId(), ClubRole.CLUB_PRESIDENT)) {
+      throw new ConflictException("User is already president of another club");
+    }
     clubMembershipRepository
         .findByClub_ClubIdAndClubRole(club.getClubId(), ClubRole.CLUB_PRESIDENT)
         .forEach(current -> current.setClubRole(ClubRole.MEMBER));
@@ -143,6 +147,10 @@ public class ClubService {
   // ── Helpers ─────────────────────────────────────────────────────────
 
   private void assignPresident(Club club, User user) {
+    if (clubMembershipRepository.existsByUser_UserIdAndClubRole(
+        user.getUserId(), ClubRole.CLUB_PRESIDENT)) {
+      throw new ConflictException("User is already president of another club");
+    }
     clubMembershipRepository.save(
         ClubMembership.builder()
             .clubRole(ClubRole.CLUB_PRESIDENT)
