@@ -125,13 +125,8 @@ public class ClubService {
     ClubMembership target =
         clubMembershipRepository
             .findByUser_UserIdAndClub_ClubId(president.getUserId(), club.getClubId())
-            .orElseThrow(
-                () ->
-                    new NotFoundException(
-                        "User '"
-                            + president.getUsername()
-                            + "' is not a member of this club"));
-    if (target.getClubRole() == ClubRole.CLUB_PRESIDENT) {
+            .orElse(null);
+    if (target != null && target.getClubRole() == ClubRole.CLUB_PRESIDENT) {
       throw new ConflictException("User is already the president of this club");
     }
     if (clubMembershipRepository.existsByUser_UserIdAndClubRole(
@@ -141,7 +136,17 @@ public class ClubService {
     clubMembershipRepository
         .findByClub_ClubIdAndClubRole(club.getClubId(), ClubRole.CLUB_PRESIDENT)
         .forEach(current -> current.setClubRole(ClubRole.MEMBER));
-    target.setClubRole(ClubRole.CLUB_PRESIDENT);
+    if (target == null) {
+      clubMembershipRepository.save(
+          ClubMembership.builder()
+              .clubRole(ClubRole.CLUB_PRESIDENT)
+              .startedAt(new Date())
+              .user(president)
+              .club(club)
+              .build());
+    } else {
+      target.setClubRole(ClubRole.CLUB_PRESIDENT);
+    }
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────
