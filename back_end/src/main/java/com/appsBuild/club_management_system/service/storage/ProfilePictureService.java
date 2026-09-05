@@ -35,18 +35,18 @@ public class ProfilePictureService {
   }
 
   public S3UpdateResponse updateUserProfilePicture(
-      Long profilePictureId, String originalFilename) {
+      Long userId, Long profilePictureId, String originalFilename) {
     ProfilePicture current = findProfilePicture(profilePictureId);
     S3UploadResponse upload =
-        requestUserProfilePictureUpload(current.getUser().getUserId(), originalFilename);
+        requestUserProfilePictureUpload(userId, originalFilename);
     return new S3UpdateResponse(upload.uploadUrl(), current.getS3Key(), upload.key());
   }
 
   public S3UpdateResponse updateClubProfilePicture(
-      Long profilePictureId, String originalFilename) {
+      Long clubId, Long profilePictureId, String originalFilename) {
     ProfilePicture current = findProfilePicture(profilePictureId);
     S3UploadResponse upload =
-        requestClubProfilePictureUpload(current.getClub().getClubId(), originalFilename);
+        requestClubProfilePictureUpload(clubId, originalFilename);
     return new S3UpdateResponse(upload.uploadUrl(), current.getS3Key(), upload.key());
   }
 

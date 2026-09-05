@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
+  // Finds the attachment stored under the given S3 key, if one exists (used when replacing an old file).
   Optional<Attachment> findByS3Key(String oldKey);
 }
