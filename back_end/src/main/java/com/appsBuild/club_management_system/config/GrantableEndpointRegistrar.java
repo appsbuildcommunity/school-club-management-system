@@ -1,8 +1,8 @@
 package com.appsBuild.club_management_system.config;
 
-import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
-import com.appsBuild.club_management_system.model.entity.Endpoint;
-import com.appsBuild.club_management_system.repository.EndpointRepository;
+import com.appsBuild.club_management_system.annotation.Grantable;
+import com.appsBuild.club_management_system.model.entity.GrantableEndpoint;
+import com.appsBuild.club_management_system.repository.GrantableEndpointRepository;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Keeps the {@link Endpoint} table in sync with the code: registers every
- * {@code @GrantableEndpoint}-annotated method as an {@link Endpoint} row (upsert), then prunes
+ * Keeps the {@link GrantableEndpoint} table in sync with the code: registers every
+ * {@code @Grantable}-annotated method as a {@link GrantableEndpoint} row (upsert), then prunes
  * rows whose annotation disappeared from the code.
  *
  * <p>Pruned rows are removed together with their references — profile-template join rows
@@ -26,13 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
  * cleaned up by DB-level {@code ON DELETE CASCADE} constraints.
  */
 @Component
-public class EndpointRegistrar implements ApplicationRunner {
+public class GrantableEndpointRegistrar implements ApplicationRunner {
 
-  private final EndpointRepository endpointRepository;
+  private final GrantableEndpointRepository grantableEndpointRepository;
   private final ApplicationContext context;
 
-  public EndpointRegistrar(EndpointRepository endpointRepository, ApplicationContext context) {
-    this.endpointRepository = endpointRepository;
+  public GrantableEndpointRegistrar(
+      GrantableEndpointRepository grantableEndpointRepository, ApplicationContext context) {
+    this.grantableEndpointRepository = grantableEndpointRepository;
     this.context = context;
   }
 
@@ -43,7 +44,7 @@ public class EndpointRegistrar implements ApplicationRunner {
     for (Object bean : context.getBeansWithAnnotation(RestController.class).values()) {
       Class<?> targetClass = AopUtils.getTargetClass(bean);
       for (Method method : targetClass.getDeclaredMethods()) {
-        GrantableEndpoint annotation = method.getAnnotation(GrantableEndpoint.class);
+        Grantable annotation = method.getAnnotation(Grantable.class);
         if (annotation == null) {
           continue;
         }
@@ -54,21 +55,24 @@ public class EndpointRegistrar implements ApplicationRunner {
     prune(seen);
   }
 
-  /** Removes endpoint rows that no longer correspond to any {@code @GrantableEndpoint}. */
+  /**
+   * Removes endpoint rows that no longer correspond to any {@code @Grantable}.
+   */
   private void prune(Set<String> seen) {
-    List<Endpoint> orphans =
-        endpointRepository.findAll().stream()
+    List<GrantableEndpoint> orphans =
+        grantableEndpointRepository.findAll().stream()
             .filter(endpoint -> !seen.contains(endpoint.getName()))
             .toList();
     if (!orphans.isEmpty()) {
-      endpointRepository.deleteAll(orphans);
+      grantableEndpointRepository.deleteAll(orphans);
     }
   }
 
-  private void upsert(GrantableEndpoint annotation) {
-    Optional<Endpoint> existing = endpointRepository.findByName(annotation.name());
+  private void upsert(Grantable annotation) {
+    Optional<GrantableEndpoint> existing =
+        grantableEndpointRepository.findByName(annotation.name());
     if (existing.isPresent()) {
-      Endpoint endpoint = existing.get();
+      GrantableEndpoint endpoint = existing.get();
       boolean changed =
           !endpoint.getDescription().equals(annotation.description())
               || endpoint.getCategory() != annotation.category()
@@ -77,12 +81,12 @@ public class EndpointRegistrar implements ApplicationRunner {
         endpoint.setDescription(annotation.description());
         endpoint.setCategory(annotation.category());
         endpoint.setPrivileged(annotation.privileged());
-        endpointRepository.save(endpoint);
+        grantableEndpointRepository.save(endpoint);
       }
       return;
     }
-    endpointRepository.save(
-        Endpoint.builder()
+    grantableEndpointRepository.save(
+        GrantableEndpoint.builder()
             .name(annotation.name())
             .description(annotation.description())
             .category(annotation.category())

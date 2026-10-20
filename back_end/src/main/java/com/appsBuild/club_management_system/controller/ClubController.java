@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
+import com.appsBuild.club_management_system.annotation.Grantable;
 import com.appsBuild.club_management_system.dto.club.ClubDetailResponse;
 import com.appsBuild.club_management_system.dto.club.ClubRequest;
 import com.appsBuild.club_management_system.dto.club.ClubResponse;
@@ -33,7 +33,7 @@ public class ClubController {
   }
 
   @PostMapping
-  @GrantableEndpoint(
+  @Grantable(
       name = "create_club",
       description = "Create a new club",
       category = Category.MANAGE_CLUBS,
@@ -58,7 +58,7 @@ public class ClubController {
   // ── Update / Delete ─────────────────────────────────────────────────
 
   @PutMapping("/{clubId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "update_club",
       description = "Update a club's information",
       category = Category.MANAGE_CLUBS,
@@ -70,7 +70,7 @@ public class ClubController {
   }
 
   @DeleteMapping("/{clubId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "delete_club",
       description = "Delete a club",
       category = Category.MANAGE_CLUBS,
@@ -84,7 +84,7 @@ public class ClubController {
   // ── President management ────────────────────────────────────────────
 
   @PutMapping("/{clubId}/president")
-  @GrantableEndpoint(
+  @Grantable(
       name = "change_club_president",
       description = "Change the president of a club",
       category = Category.MANAGE_CLUBS,

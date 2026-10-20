@@ -284,16 +284,26 @@ class ClubServiceTest {
   }
 
   @Test
-  void changePresident_targetNotAMember_throwsNotFound() {
+  void changePresident_targetNotAMember_createsNewPresidentMembership() {
     Club club = Club.builder().clubId(2L).clubName("Chess").build();
     User bob = User.builder().userId(11L).username("bob").build();
     when(clubRepository.findById(2L)).thenReturn(Optional.of(club));
     when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
     when(clubMembershipRepository.findByUser_UserIdAndClub_ClubId(11L, 2L))
         .thenReturn(Optional.empty());
+    when(clubMembershipRepository.existsByUser_UserIdAndClubRole(11L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(false);
+    when(clubMembershipRepository.findByClub_ClubIdAndClubRole(2L, ClubRole.CLUB_PRESIDENT))
+        .thenReturn(List.of());
 
-    assertThrows(
-        NotFoundException.class, () -> clubService.changePresident(2L, new PresidentRequest("bob")));
+    clubService.changePresident(2L, new PresidentRequest("bob"));
+
+    ArgumentCaptor<ClubMembership> captor = ArgumentCaptor.forClass(ClubMembership.class);
+    verify(clubMembershipRepository).save(captor.capture());
+    ClubMembership created = captor.getValue();
+    assertEquals(ClubRole.CLUB_PRESIDENT, created.getClubRole());
+    assertEquals(bob, created.getUser());
+    assertEquals(club, created.getClub());
   }
 
   @Test

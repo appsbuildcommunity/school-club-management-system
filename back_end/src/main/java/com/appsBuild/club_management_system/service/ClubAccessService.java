@@ -4,7 +4,7 @@ import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.ClubMembership;
 import com.appsBuild.club_management_system.model.entity.ClubMembershipProfile;
-import com.appsBuild.club_management_system.model.entity.Endpoint;
+import com.appsBuild.club_management_system.model.entity.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
@@ -12,7 +12,7 @@ import com.appsBuild.club_management_system.repository.ClubMembershipEndpointRep
 import com.appsBuild.club_management_system.repository.ClubMembershipProfileRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
 import com.appsBuild.club_management_system.repository.ClubRepository;
-import com.appsBuild.club_management_system.repository.EndpointRepository;
+import com.appsBuild.club_management_system.repository.GrantableEndpointRepository;
 import com.appsBuild.club_management_system.repository.UserRepository;
 
 import lombok.AllArgsConstructor;
@@ -37,7 +37,7 @@ public class ClubAccessService {
 
   private final UserRepository userRepository;
   private final ClubRepository clubRepository;
-  private final EndpointRepository endpointRepository;
+  private final GrantableEndpointRepository grantableEndpointRepository;
   private final ClubMembershipRepository clubMembershipRepository;
   private final ClubMembershipEndpointRepository clubMembershipEndpointRepository;
   private final ClubMembershipProfileRepository clubMembershipProfileRepository;
@@ -89,7 +89,7 @@ public class ClubAccessService {
     if (isAdmin()) {
       return true;
     }
-    Endpoint endpoint = resolveEndpoint(endpointName);
+    GrantableEndpoint endpoint = resolveEndpoint(endpointName);
     if (endpoint.isPrivileged() && !clubId.equals(coordinationClubId())) {
       return false;
     }
@@ -170,7 +170,7 @@ public class ClubAccessService {
     List<ClubMembershipProfile> profiles =
         clubMembershipProfileRepository.findByClubMembership_MembershipId(membershipId);
     for (ClubMembershipProfile cmp : profiles) {
-      for (Endpoint ep : cmp.getClubProfile().getEndpoints()) {
+      for (GrantableEndpoint ep : cmp.getClubProfile().getEndpoints()) {
         if (ep.getName().equals(endpointName)) {
           return true;
         }
@@ -183,7 +183,7 @@ public class ClubAccessService {
     List<ClubMembershipProfile> profiles =
         clubMembershipProfileRepository.findByClubMembership_MembershipId(membershipId);
     for (ClubMembershipProfile cmp : profiles) {
-      for (Endpoint ep : cmp.getClubProfile().getEndpoints()) {
+      for (GrantableEndpoint ep : cmp.getClubProfile().getEndpoints()) {
         if (ep.getCategory() == category) {
           return true;
         }
@@ -192,8 +192,8 @@ public class ClubAccessService {
     return false;
   }
 
-  private Endpoint resolveEndpoint(String endpointName) {
-    return endpointRepository
+  private GrantableEndpoint resolveEndpoint(String endpointName) {
+    return grantableEndpointRepository
         .findByName(endpointName)
         .orElseThrow(() -> new NotFoundException("Endpoint not found: " + endpointName));
   }

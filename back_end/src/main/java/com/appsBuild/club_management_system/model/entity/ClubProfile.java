@@ -43,5 +43,5 @@ public class ClubProfile {
       name = "club_profile_endpoints",
       joinColumns = @JoinColumn(name = "club_profile_id"),
       inverseJoinColumns = @JoinColumn(name = "endpoint_id"))
-  private List<Endpoint> endpoints;
+  private List<GrantableEndpoint> endpoints;
 }

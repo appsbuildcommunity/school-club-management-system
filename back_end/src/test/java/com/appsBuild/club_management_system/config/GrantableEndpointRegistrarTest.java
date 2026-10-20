@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.ClubMembership;
 import com.appsBuild.club_management_system.model.entity.ClubMembershipEndpoint;
-import com.appsBuild.club_management_system.model.entity.Endpoint;
+import com.appsBuild.club_management_system.model.entity.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
 import com.appsBuild.club_management_system.repository.ClubMembershipEndpointRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
 import com.appsBuild.club_management_system.repository.ClubRepository;
-import com.appsBuild.club_management_system.repository.EndpointRepository;
+import com.appsBuild.club_management_system.repository.GrantableEndpointRepository;
 import com.appsBuild.club_management_system.repository.UserRepository;
 import java.util.Date;
 import org.junit.jupiter.api.AfterAll;
@@ -25,7 +25,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class EndpointRegistrarTest {
+class GrantableEndpointRegistrarTest {
 
   static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18");
 
@@ -46,8 +46,8 @@ class EndpointRegistrarTest {
     registry.add("spring.datasource.password", postgres::getPassword);
   }
 
-  @Autowired private EndpointRegistrar endpointRegistrar;
-  @Autowired private EndpointRepository endpointRepository;
+  @Autowired private GrantableEndpointRegistrar grantableEndpointRegistrar;
+  @Autowired private GrantableEndpointRepository grantableEndpointRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private ClubRepository clubRepository;
   @Autowired private ClubMembershipRepository clubMembershipRepository;
@@ -55,19 +55,19 @@ class EndpointRegistrarTest {
 
   @Test
   void run_prunesEndpointRowsWithoutAnnotation() {
-    endpointRepository.save(
-        Endpoint.builder()
+    grantableEndpointRepository.save(
+        GrantableEndpoint.builder()
             .name("removed_endpoint")
             .description("No longer present in code")
             .category(Category.MANAGE_EVENTS)
             .privileged(false)
             .build());
 
-    endpointRegistrar.run(null);
+    grantableEndpointRegistrar.run(null);
 
-    assertTrue(endpointRepository.findByName("removed_endpoint").isEmpty());
-    // endpoints registered from @GrantableEndpoint annotations survive
-    assertTrue(endpointRepository.findByName("create_club").isPresent());
+    assertTrue(grantableEndpointRepository.findByName("removed_endpoint").isEmpty());
+    // endpoints registered from @Grantable annotations survive
+    assertTrue(grantableEndpointRepository.findByName("create_club").isPresent());
   }
 
   @Test
@@ -96,9 +96,9 @@ class EndpointRegistrarTest {
                 .user(user)
                 .club(club)
                 .build());
-    Endpoint orphan =
-        endpointRepository.save(
-            Endpoint.builder()
+    GrantableEndpoint orphan =
+        grantableEndpointRepository.save(
+            GrantableEndpoint.builder()
                 .name("removed_with_grants")
                 .description("No longer present in code")
                 .category(Category.MANAGE_EVENTS)
@@ -111,9 +111,9 @@ class EndpointRegistrarTest {
             .grantedDate(new Date())
             .build());
 
-    endpointRegistrar.run(null);
+    grantableEndpointRegistrar.run(null);
 
-    assertTrue(endpointRepository.findByName("removed_with_grants").isEmpty());
+    assertTrue(grantableEndpointRepository.findByName("removed_with_grants").isEmpty());
     assertTrue(
         clubMembershipEndpointRepository
             .findByClubMembership_MembershipId(membership.getMembershipId())

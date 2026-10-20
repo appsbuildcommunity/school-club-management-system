@@ -1545,11 +1545,11 @@ Must be called after the new file has been successfully PUT to S3. The backend v
 
 ## Endpoint Registry
 
-The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@GrantableEndpoint` annotation. This section exposes that registry.
+The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@Grantable` annotation. This section exposes that registry.
 
 ### List All Grantable Endpoints
 
-**GET** `/api/endpoints`
+**GET** `/api/grantable-endpoints`
 
 **Authorization:** Bearer token
 

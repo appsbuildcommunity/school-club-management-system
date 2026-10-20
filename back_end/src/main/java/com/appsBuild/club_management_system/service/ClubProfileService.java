@@ -13,14 +13,14 @@ import com.appsBuild.club_management_system.model.entity.ClubMembership;
 import com.appsBuild.club_management_system.model.entity.ClubMembershipEndpoint;
 import com.appsBuild.club_management_system.model.entity.ClubMembershipProfile;
 import com.appsBuild.club_management_system.model.entity.ClubProfile;
-import com.appsBuild.club_management_system.model.entity.Endpoint;
+import com.appsBuild.club_management_system.model.entity.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
 import com.appsBuild.club_management_system.repository.ClubMembershipEndpointRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipProfileRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
 import com.appsBuild.club_management_system.repository.ClubProfileRepository;
 import com.appsBuild.club_management_system.repository.ClubRepository;
-import com.appsBuild.club_management_system.repository.EndpointRepository;
+import com.appsBuild.club_management_system.repository.GrantableEndpointRepository;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,7 +44,7 @@ public class ClubProfileService {
   private final ClubProfileRepository clubProfileRepository;
   private final ClubMembershipProfileRepository clubMembershipProfileRepository;
   private final ClubMembershipEndpointRepository clubMembershipEndpointRepository;
-  private final EndpointRepository endpointRepository;
+  private final GrantableEndpointRepository grantableEndpointRepository;
   private final ClubAccessService clubAccessService;
 
   // ── Profile CRUD ────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ public class ClubProfileService {
       ensureProfileAssignment(membership, profile);
     } else {
       for (String endpointName : request.endpoints()) {
-        Endpoint endpoint = grantableEndpoint(endpointName, clubId);
+        GrantableEndpoint endpoint = grantableEndpoint(endpointName, clubId);
         ensureIndividualGrant(membership, endpoint);
       }
     }
@@ -155,7 +155,7 @@ public class ClubProfileService {
     for (ClubMembershipProfile cmp : profiles) {
       ClubProfile profile = cmp.getClubProfile();
       SourceProfile source = new SourceProfile(profile.getClubProfileId(), profile.getName());
-      for (Endpoint ep : profile.getEndpoints()) {
+      for (GrantableEndpoint ep : profile.getEndpoints()) {
         String name = ep.getName();
         if (seen.add(name)) {
           privileges.add(
@@ -182,7 +182,7 @@ public class ClubProfileService {
     }
   }
 
-  private void ensureIndividualGrant(ClubMembership membership, Endpoint endpoint) {
+  private void ensureIndividualGrant(ClubMembership membership, GrantableEndpoint endpoint) {
     if (!clubMembershipEndpointRepository
         .existsByClubMembership_MembershipIdAndEndpoint_Name(
             membership.getMembershipId(), endpoint.getName())) {
@@ -208,7 +208,7 @@ public class ClubProfileService {
       return;
     }
     Set<String> templateEndpoints =
-        profile.getEndpoints().stream().map(Endpoint::getName).collect(Collectors.toSet());
+        profile.getEndpoints().stream().map(GrantableEndpoint::getName).collect(Collectors.toSet());
     for (String name : requestedEndpoints) {
       if (!templateEndpoints.contains(name)) {
         throw new ApplicationException(
@@ -217,9 +217,9 @@ public class ClubProfileService {
     }
   }
 
-  private Endpoint grantableEndpoint(String name, Long clubId) {
-    Endpoint endpoint =
-        endpointRepository
+  private GrantableEndpoint grantableEndpoint(String name, Long clubId) {
+    GrantableEndpoint endpoint =
+        grantableEndpointRepository
             .findByName(name)
             .orElseThrow(() -> new NotFoundException("Endpoint not found: " + name));
     if (endpoint.isPrivileged() && !clubId.equals(clubAccessService.coordinationClubId())) {
@@ -229,7 +229,7 @@ public class ClubProfileService {
     return endpoint;
   }
 
-  private List<Endpoint> resolveEndpoints(List<String> names) {
+  private List<GrantableEndpoint> resolveEndpoints(List<String> names) {
     if (names == null || names.isEmpty()) {
       return List.of();
     }
@@ -237,7 +237,7 @@ public class ClubProfileService {
         .distinct()
         .map(
             n ->
-                endpointRepository
+                grantableEndpointRepository
                     .findByName(n)
                     .orElseThrow(() -> new NotFoundException("Endpoint not found: " + n)))
         .toList();
@@ -281,6 +281,6 @@ public class ClubProfileService {
     return new ClubProfileResponse(
         p.getClubProfileId(),
         p.getName(),
-        p.getEndpoints().stream().map(Endpoint::getName).toList());
+        p.getEndpoints().stream().map(GrantableEndpoint::getName).toList());
   }
 }
