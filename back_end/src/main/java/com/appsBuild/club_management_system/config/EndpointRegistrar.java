@@ -4,19 +4,26 @@ import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.entity.Endpoint;
 import com.appsBuild.club_management_system.repository.EndpointRepository;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Registers every {@code @GrantableEndpoint}-annotated method as an {@link Endpoint} row.
+ * Keeps the {@link Endpoint} table in sync with the code: registers every
+ * {@code @GrantableEndpoint}-annotated method as an {@link Endpoint} row (upsert), then prunes
+ * rows whose annotation disappeared from the code.
  *
- * <p>Upsert-only: existing rows are refreshed from the annotation, but rows whose
- * annotation disappeared from the code are left untouched (no pruning).
+ * <p>Pruned rows are removed together with their references — profile-template join rows
+ * ({@code club_profile_endpoints}) and member grants ({@code club_membership_endpoint}) are
+ * cleaned up by DB-level {@code ON DELETE CASCADE} constraints.
  */
 @Component
 public class EndpointRegistrar implements ApplicationRunner {
@@ -30,7 +37,9 @@ public class EndpointRegistrar implements ApplicationRunner {
   }
 
   @Override
+  @Transactional
   public void run(ApplicationArguments args) {
+    Set<String> seen = new HashSet<>();
     for (Object bean : context.getBeansWithAnnotation(RestController.class).values()) {
       Class<?> targetClass = AopUtils.getTargetClass(bean);
       for (Method method : targetClass.getDeclaredMethods()) {
@@ -38,8 +47,21 @@ public class EndpointRegistrar implements ApplicationRunner {
         if (annotation == null) {
           continue;
         }
+        seen.add(annotation.name());
         upsert(annotation);
       }
+    }
+    prune(seen);
+  }
+
+  /** Removes endpoint rows that no longer correspond to any {@code @GrantableEndpoint}. */
+  private void prune(Set<String> seen) {
+    List<Endpoint> orphans =
+        endpointRepository.findAll().stream()
+            .filter(endpoint -> !seen.contains(endpoint.getName()))
+            .toList();
+    if (!orphans.isEmpty()) {
+      endpointRepository.deleteAll(orphans);
     }
   }
 

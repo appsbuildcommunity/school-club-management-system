@@ -47,3 +47,5 @@ databaseChangeLog:
       file: db/changelog/migrations/023-create-club-membership-endpoint.sql
   - include:
       file: db/changelog/migrations/025-create-club-membership-profile-table.sql
+  - include:
+      file: db/changelog/migrations/026-add-on-delete-cascade-to-club-membership-endpoint.sql
