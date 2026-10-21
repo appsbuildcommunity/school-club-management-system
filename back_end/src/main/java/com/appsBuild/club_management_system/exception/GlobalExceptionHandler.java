@@ -1,5 +1,6 @@
 package com.appsBuild.club_management_system.exception;
 
+import com.appsBuild.club_management_system.exception.impl.ConflictException;
 import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,19 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler({NotFoundException.class, EntityNotFoundException.class})
-  public ResponseEntity<ErrorBody> handleNotFound(RuntimeException ex) {
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<ErrorBody> handleNotFound(NotFoundException ex) {
     return build(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
+  }
+
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity<ErrorBody> handleEntityNotFound(EntityNotFoundException ex) {
+    return build(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
+  }
+
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ErrorBody> handleConflict(ConflictException ex) {
+    return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
   }
 
   @ExceptionHandler(ApplicationException.class)

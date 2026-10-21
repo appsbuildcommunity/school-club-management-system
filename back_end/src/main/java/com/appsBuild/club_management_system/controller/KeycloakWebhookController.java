@@ -2,6 +2,7 @@ package com.appsBuild.club_management_system.controller;
 
 import com.appsBuild.club_management_system.dto.keycloak.KeycloakWebhookEvent;
 import com.appsBuild.club_management_system.service.keycloak.KeycloakWebhookService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ public class KeycloakWebhookController {
   private final KeycloakWebhookService keycloakWebhookService;
 
   @PostMapping({"/user-registered", "/user-registered/"})
-  public ResponseEntity<Void> userRegistered(@RequestBody KeycloakWebhookEvent event) {
+  public ResponseEntity<Void> userRegistered(@Valid @RequestBody KeycloakWebhookEvent event) {
     keycloakWebhookService.handleEvent(event);
     return ResponseEntity.ok().build();
   }
