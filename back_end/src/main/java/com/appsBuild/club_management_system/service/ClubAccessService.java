@@ -86,9 +86,6 @@ public class ClubAccessService {
    * club) and the caller must either be the club president or hold a grant for it.
    */
   public boolean hasEndpoint(Long clubId, String endpointName) {
-    if (isAdmin()) {
-      return true;
-    }
     GrantableEndpoint endpoint = resolveEndpoint(endpointName);
     if (endpoint.isPrivileged() && !clubId.equals(coordinationClubId())) {
       return false;
@@ -122,9 +119,6 @@ public class ClubAccessService {
 
   /** True if the caller is the coordination club president (or ADMIN). */
   public boolean isCoordinationClubPresident() {
-    if (isAdmin()) {
-      return true;
-    }
     return isPresidentOfClub(coordinationClubId());
   }
 
@@ -145,9 +139,6 @@ public class ClubAccessService {
 
   /** True if the caller holds at least one privilege in the given category within the club. */
   public boolean hasCategoryPrivilege(Long clubId, Category category) {
-    if (isAdmin()) {
-      return true;
-    }
     Optional<ClubMembership> membership =
         clubMembershipRepository.findByUser_UserIdAndClub_ClubId(
             currentUser().getUserId(), clubId);

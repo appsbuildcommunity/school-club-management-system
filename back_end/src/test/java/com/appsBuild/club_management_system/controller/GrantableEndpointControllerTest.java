@@ -28,18 +28,30 @@ class GrantableEndpointControllerTest {
   @MockitoBean private GrantableEndpointService grantableEndpointService;
 
   @Test
-  void getEndpoints_returns200() throws Exception {
+  void getGrantableEndpoints_returns200() throws Exception {
     GrantableEndpointResponse e1 =
         new GrantableEndpointResponse("manage_events", "Manage events", Category.MANAGE_EVENTS, false);
-    GrantableEndpointResponse e2 =
-        new GrantableEndpointResponse("manage_clubs", "Manage clubs", Category.MANAGE_CLUBS, true);
-    when(grantableEndpointService.getEndpoints()).thenReturn(List.of(e1, e2));
+    when(grantableEndpointService.getGrantableEndpoints()).thenReturn(List.of(e1));
 
     mockMvc
         .perform(get("/api/grantable-endpoints"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$.length()").value(1))
         .andExpect(jsonPath("$[0].name").value("manage_events"))
-        .andExpect(jsonPath("$[1].privileged").value(true));
+        .andExpect(jsonPath("$[0].privileged").value(false));
+  }
+
+  @Test
+  void getPrivilegedGrantableEndpoints_returns200() throws Exception {
+    GrantableEndpointResponse e2 =
+        new GrantableEndpointResponse("manage_clubs", "Manage clubs", Category.MANAGE_CLUBS, true);
+    when(grantableEndpointService.getPrivilegedGrantableEndpoints()).thenReturn(List.of(e2));
+
+    mockMvc
+        .perform(get("/api/grantable-endpoints/privileged"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].name").value("manage_clubs"))
+        .andExpect(jsonPath("$[0].privileged").value(true));
   }
 }

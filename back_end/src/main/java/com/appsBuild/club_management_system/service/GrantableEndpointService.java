@@ -11,18 +11,22 @@ import org.springframework.stereotype.Service;
 public class GrantableEndpointService {
 
   private final GrantableEndpointRepository grantableEndpointRepository;
-  private final ClubAccessService clubAccessService;
 
-  public List<GrantableEndpointResponse> getEndpoints() {
-    boolean showAll = clubAccessService.isAdmin() || clubAccessService.isCoordinationClubPresident();
-    return (showAll
-            ? grantableEndpointRepository.findAll()
-            : grantableEndpointRepository.findByPrivilegedFalse())
-        .stream()
-            .map(
-                e ->
-                    new GrantableEndpointResponse(
-                        e.getName(), e.getDescription(), e.getCategory(), e.isPrivileged()))
-            .toList();
+  public List<GrantableEndpointResponse> getGrantableEndpoints() {
+    return grantableEndpointRepository.findByPrivilegedFalse().stream()
+        .map(
+            e ->
+                new GrantableEndpointResponse(
+                    e.getName(), e.getDescription(), e.getCategory(), e.isPrivileged()))
+        .toList();
+  }
+
+  public List<GrantableEndpointResponse> getPrivilegedGrantableEndpoints() {
+    return grantableEndpointRepository.findByPrivilegedTrue().stream()
+        .map(
+            e ->
+                new GrantableEndpointResponse(
+                    e.getName(), e.getDescription(), e.getCategory(), e.isPrivileged()))
+        .toList();
   }
 }

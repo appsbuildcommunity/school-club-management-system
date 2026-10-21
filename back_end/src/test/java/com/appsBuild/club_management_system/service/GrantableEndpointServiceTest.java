@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class GrantableEndpointServiceTest {
 
   @Mock private GrantableEndpointRepository grantableEndpointRepository;
-  @Mock private ClubAccessService clubAccessService;
 
   @InjectMocks private GrantableEndpointService grantableEndpointService;
 
@@ -49,40 +48,29 @@ class GrantableEndpointServiceTest {
   }
 
   @Test
-  void getEndpoints_adminSeesAll() {
-    when(clubAccessService.isAdmin()).thenReturn(true);
-    when(grantableEndpointRepository.findAll()).thenReturn(List.of(nonPrivileged, privileged));
-
-    List<GrantableEndpointResponse> result = grantableEndpointService.getEndpoints();
-
-    assertEquals(2, result.size());
-    verify(grantableEndpointRepository).findAll();
-    verify(grantableEndpointRepository, never()).findByPrivilegedFalse();
-  }
-
-  @Test
-  void getEndpoints_coordinationPresidentSeesAll() {
-    when(clubAccessService.isAdmin()).thenReturn(false);
-    when(clubAccessService.isCoordinationClubPresident()).thenReturn(true);
-    when(grantableEndpointRepository.findAll()).thenReturn(List.of(nonPrivileged, privileged));
-
-    List<GrantableEndpointResponse> result = grantableEndpointService.getEndpoints();
-
-    assertEquals(2, result.size());
-    verify(grantableEndpointRepository).findAll();
-  }
-
-  @Test
-  void getEndpoints_regularMemberSeesOnlyNonPrivileged() {
-    when(clubAccessService.isAdmin()).thenReturn(false);
-    when(clubAccessService.isCoordinationClubPresident()).thenReturn(false);
+  void getGrantableEndpoints_returnsOnlyNonPrivileged() {
     when(grantableEndpointRepository.findByPrivilegedFalse()).thenReturn(List.of(nonPrivileged));
 
-    List<GrantableEndpointResponse> result = grantableEndpointService.getEndpoints();
+    List<GrantableEndpointResponse> result = grantableEndpointService.getGrantableEndpoints();
 
     assertEquals(1, result.size());
     assertEquals("manage_events", result.get(0).name());
     assertFalse(result.get(0).privileged());
-    verify(grantableEndpointRepository, never()).findAll();
+    verify(grantableEndpointRepository).findByPrivilegedFalse();
+    verify(grantableEndpointRepository, never()).findByPrivilegedTrue();
+  }
+
+  @Test
+  void getPrivilegedGrantableEndpoints_returnsOnlyPrivileged() {
+    when(grantableEndpointRepository.findByPrivilegedTrue()).thenReturn(List.of(privileged));
+
+    List<GrantableEndpointResponse> result =
+        grantableEndpointService.getPrivilegedGrantableEndpoints();
+
+    assertEquals(1, result.size());
+    assertEquals("manage_clubs", result.get(0).name());
+    assertTrue(result.get(0).privileged());
+    verify(grantableEndpointRepository).findByPrivilegedTrue();
+    verify(grantableEndpointRepository, never()).findByPrivilegedFalse();
   }
 }

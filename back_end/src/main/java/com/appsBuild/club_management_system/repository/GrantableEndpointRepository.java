@@ -12,6 +12,9 @@ public interface GrantableEndpointRepository extends JpaRepository<GrantableEndp
   // Finds the registered endpoint by its unique privilege name, if it exists.
   Optional<GrantableEndpoint> findByName(String name);
 
-  // Lists all non-privileged endpoints (used by the registry view for non-ADMIN callers).
+  // Lists all non-privileged endpoints (used by the open registry view).
   List<GrantableEndpoint> findByPrivilegedFalse();
+
+  // Lists all privileged endpoints (used by the privileged registry view).
+  List<GrantableEndpoint> findByPrivilegedTrue();
 }
