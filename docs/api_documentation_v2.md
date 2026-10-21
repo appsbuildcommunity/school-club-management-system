@@ -27,8 +27,8 @@ enum Visibility {
 
 enum AttachmentType {
   IMAGE = 'IMAGE',
+  PDF = 'PDF',
   VIDEO = 'VIDEO',
-  DOCUMENT = 'DOCUMENT',
 }
 
 enum DemandStatus {
@@ -43,6 +43,7 @@ enum Category {
   MANAGE_EVENTS = 'MANAGE_EVENTS',
   MANAGE_MEMBERS = 'MANAGE_MEMBERS',
   MANAGE_CLUBS = 'MANAGE_CLUBS',
+  VIEW_ENDPOINTS = 'VIEW_ENDPOINTS',
 }
 ```
 
@@ -139,8 +140,8 @@ interface ClubDetailResponse extends ClubResponse {
 interface EndpointResponse {
   name: string          // unique identifier, e.g. "manage_profiles"
   description: string   // human-readable description
-  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS
-  privileged: boolean   // true only for MANAGE_CLUBS (admin-only endpoints)
+  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS | VIEW_ENDPOINTS
+  privileged: boolean   // true for admin-only endpoints (MANAGE_CLUBS, VIEW_ENDPOINTS) — grantable only in the coordination club
 }
 
 // Club Profile (role template grouping multiple endpoints)
@@ -435,7 +436,7 @@ Bootstraps the single coordination club (`isCoordinationClub = true`). This is a
 
 **POST** `/api/clubs`
 
-**Authorization:** `ADMIN` or `create_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
+**Authorization:** `ADMIN` or `create_club` grantable endpoint (privileged)
 
 Creates a regular club. If `presidentUsername` is provided, that user must exist and becomes the club's first member with the `CLUB_PRESIDENT` role.
 
@@ -467,7 +468,7 @@ Creates a regular club. If `presidentUsername` is provided, that user must exist
 
 **PUT** `/api/clubs/{clubId}`
 
-**Authorization:** `ADMIN` or `update_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
+**Authorization:** `ADMIN` or `update_club` grantable endpoint (privileged)
 
 Updates the club's name, full name and description. The coordination club can be updated like any other club, but its name must stay unique.
 
@@ -498,7 +499,7 @@ Updates the club's name, full name and description. The coordination club can be
 
 **DELETE** `/api/clubs/{clubId}`
 
-**Authorization:** `ADMIN` or `delete_club` grantable endpoint (`MANAGE_CLUBS`, privileged)
+**Authorization:** `ADMIN` or `delete_club` grantable endpoint (privileged)
 
 Hard-deletes the club. All dependent rows (memberships, join requests, posts, events, profiles, membership history) are removed by database-level `ON DELETE CASCADE` constraints. **The coordination club cannot be deleted** (`409`).
 
@@ -518,12 +519,12 @@ Hard-deletes the club. All dependent rows (memberships, join requests, posts, ev
 
 **PUT** `/api/clubs/{clubId}/president`
 
-**Authorization:** `ADMIN` or `change_club_president` grantable endpoint (`MANAGE_CLUBS`, privileged)
+**Authorization:** `ADMIN` or `change_club_president` grantable endpoint (privileged)
 
-Hands the presidency to an existing member of the club:
+Hands the presidency to any user:
 
-- The target user must already be a member of the club (`404` otherwise).
-- If the target is already president → `409`.
+- The target user does **not** need to be a member already — if they aren't, a new membership with the `CLUB_PRESIDENT` role is created for them.
+- If the target is already president of this club **or of any other club** → `409`.
 - Targeting the **coordination club** requires `ADMIN` (`403` for anyone else) — only the realm ADMIN can swap the person who controls all privileged endpoint grants.
 - The outgoing president is demoted to `MEMBER`. Nothing is written to the membership-history table.
 
@@ -543,8 +544,8 @@ Hands the presidency to an existing member of the club:
 - `400 Bad Request` — blank `presidentUsername`
 - `401 Unauthorized` — missing/invalid token
 - `403 Forbidden` — caller holds neither `ADMIN` nor the `change_club_president` privileged endpoint
-- `404 Not Found` — club not found, or the user is not a member of this club
-- `409 Conflict` — the user is already the president of this club
+- `404 Not Found` — club not found, or no user with that username
+- `409 Conflict` — the user is already the president of this club or of another club
 
 ---
 
@@ -1547,13 +1548,13 @@ Must be called after the new file has been successfully PUT to S3. The backend v
 
 The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@Grantable` annotation. This section exposes that registry.
 
-### List All Grantable Endpoints
+### List Grantable Endpoints
 
 **GET** `/api/grantable-endpoints`
 
-**Authorization:** Bearer token
+**Authorization:** Bearer token (any authenticated user)
 
-Returns all grantable endpoints. Admins and coordination-club presidents see the full list including privileged endpoints (`MANAGE_CLUBS`). Regular members see only non-privileged endpoints.
+Returns all **non-privileged** grantable endpoints.
 
 **Response:** `200 OK`
 
@@ -1570,7 +1571,27 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
     "description": "Assign a profile or individual privileges to a member",
     "category": "MANAGE_MEMBERS",
     "privileged": false
-  },
+  }
+]
+```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
+
+### List Privileged Grantable Endpoints
+
+**GET** `/api/grantable-endpoints/privileged`
+
+**Authorization:** `ADMIN` or the `view_privileged_endpoints` grantable endpoint (privileged — coordination club only)
+
+Returns the **privileged** grantable endpoints (`privileged: true`).
+
+**Response:** `200 OK`
+
+```json
+[
   {
     "name": "create_club",
     "description": "Create a new club",
@@ -1594,6 +1615,12 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
     "description": "Change the president of a club",
     "category": "MANAGE_CLUBS",
     "privileged": true
+  },
+  {
+    "name": "view_privileged_endpoints",
+    "description": "View privileged grantable endpoints in the registry",
+    "category": "VIEW_ENDPOINTS",
+    "privileged": true
   }
 ]
 ```
@@ -1602,6 +1629,7 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
 
 - `200 OK` — list returned
 - `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `view_privileged_endpoints` privileged endpoint
 
 ---
 
@@ -1933,4 +1961,4 @@ All error responses share a flat shape produced by the global exception handler:
 6. **Public Endpoints**: Also accessible at `/api/public/*` routes (e.g., `/api/public/posts`)
 7. **File Uploads**: All file uploads use a presigned S3 URL flow — request a PUT URL via `/api/storage/upload/*`, upload directly to S3, then confirm via `POST /api/storage/verify`. See the **Storage Endpoints** section for full details.
 8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**. This applies to every `profilePictureUrl` returned by the club CRUD endpoints.
-9. **Coordination Club Bootstrap**: The coordination club is created exactly once by an `ADMIN` via `POST /api/clubs/coordination`. It can be renamed/described like any other club but is never deletable, and it is the only club where privileged (`MANAGE_CLUBS`) endpoints can be granted. Only `ADMIN` can change its president.
+9. **Coordination Club Bootstrap**: The coordination club is created exactly once by an `ADMIN` via `POST /api/clubs/coordination`. It can be renamed/described like any other club but is never deletable, and it is the only club where privileged (`MANAGE_CLUBS`, `VIEW_ENDPOINTS`) endpoints can be granted. Only `ADMIN` can change its president.
