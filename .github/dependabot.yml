@@ -1,0 +1,41 @@
+version: 2
+
+updates:
+  - package-ecosystem: maven
+    directory: /back_end
+    schedule:
+      interval: weekly
+    # wait a week before proposing a new version, so a hijacked release is likely caught first.
+    # security updates ignore this delay
+    cooldown:
+      default-days: 7
+    groups:
+      maven-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /back_end/keycloak
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker-compose
+    directory: /back_end
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pub
+    directory: /mobile
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
