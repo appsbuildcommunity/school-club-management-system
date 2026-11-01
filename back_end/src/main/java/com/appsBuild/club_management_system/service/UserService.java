@@ -1,0 +1,98 @@
+package com.appsBuild.club_management_system.service;
+
+import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
+import com.appsBuild.club_management_system.dto.user.UserClubResponse;
+import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
+import com.appsBuild.club_management_system.dto.user.UserResponse;
+import com.appsBuild.club_management_system.exception.ApplicationException;
+import com.appsBuild.club_management_system.exception.impl.NotFoundException;
+import com.appsBuild.club_management_system.model.entity.Club;
+import com.appsBuild.club_management_system.model.entity.ClubMembership;
+import com.appsBuild.club_management_system.model.entity.ProfilePicture;
+import com.appsBuild.club_management_system.model.entity.User;
+import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
+import com.appsBuild.club_management_system.repository.UserRepository;
+import com.appsBuild.club_management_system.service.storage.ProfilePictureService;
+import com.appsBuild.club_management_system.service.storage.S3ObjectStorageService;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+  private static final Set<String> ASSIGNABLE_ROLES = Set.of("USER", "STUDENT");
+
+  private final ClubAccessService clubAccessService;
+  private final UserRepository userRepository;
+  private final ClubMembershipRepository clubMembershipRepository;
+  private final ProfilePictureService profilePictureService;
+  private final S3ObjectStorageService storage;
+
+  @Transactional(readOnly = true)
+  public UserResponse getCurrentUser() {
+    User user = clubAccessService.currentUser();
+    return new UserResponse(
+        user.getUserId(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getFirstName(),
+        user.getLastName(),
+        profilePictureUrl(user),
+        List.of(user.getRole()));
+  }
+
+  @Transactional
+  public void updateRole(Long userId, String role) {
+    String normalizedRole = role == null ? "" : role.trim().toUpperCase(Locale.ROOT);
+    if (!ASSIGNABLE_ROLES.contains(normalizedRole)) {
+      throw new ApplicationException("role must be USER or STUDENT");
+    }
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    user.setRole(normalizedRole);
+    userRepository.save(user);
+  }
+
+  public S3UploadResponse requestProfilePictureUpload(String filename) {
+    User user = clubAccessService.currentUser();
+    return profilePictureService.requestUserProfilePictureUpload(user.getUserId(), filename);
+  }
+
+  @Transactional(readOnly = true)
+  public UserClubsResponse getCurrentUserClubs() {
+    User user = clubAccessService.currentUser();
+    List<UserClubResponse> memberships =
+        clubMembershipRepository
+            .findByUser_UserIdOrderByClub_ClubNameAsc(user.getUserId())
+            .stream()
+            .map(this::toUserClubResponse)
+            .toList();
+    return new UserClubsResponse(memberships);
+  }
+
+  private UserClubResponse toUserClubResponse(ClubMembership membership) {
+    Club club = membership.getClub();
+    ProfilePicture picture = club.getProfilePicture();
+    return new UserClubResponse(
+        membership.getMembershipId(),
+        club.getClubName(),
+        club.getClubFullName(),
+        club.getDescription(),
+        club.isCoordinationClub(),
+        picture == null ? null : storage.presignGetUrl(picture.getS3Key()),
+        membership.getClubRole(),
+        membership.getStartedAt());
+  }
+
+  private String profilePictureUrl(User user) {
+    ProfilePicture picture = user.getProfilePicture();
+    return picture == null ? null : storage.presignGetUrl(picture.getS3Key());
+  }
+}

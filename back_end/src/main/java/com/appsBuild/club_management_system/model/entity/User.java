@@ -43,8 +43,9 @@ public class User {
   @Column(name = "email", nullable = false, unique = true, length = 100)
   private String email;
 
-  @Column(name = "keycloak_sub", nullable = false, unique = true, length = 100)
-  private String keycloakSub;
+  @Builder.Default
+  @Column(name = "role", nullable = false, length = 20)
+  private String role = "USER";
 
   @Column(name = "created_at", nullable = false)
   private Date createdAt;

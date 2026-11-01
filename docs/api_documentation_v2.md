@@ -43,6 +43,7 @@ enum Category {
   MANAGE_EVENTS = 'MANAGE_EVENTS',
   MANAGE_MEMBERS = 'MANAGE_MEMBERS',
   MANAGE_CLUBS = 'MANAGE_CLUBS',
+  MANAGE_USERS = 'MANAGE_USERS',
   VIEW_ENDPOINTS = 'VIEW_ENDPOINTS',
 }
 ```
@@ -140,8 +141,8 @@ interface ClubDetailResponse extends ClubResponse {
 interface EndpointResponse {
   name: string          // unique identifier, e.g. "manage_profiles"
   description: string   // human-readable description
-  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS | VIEW_ENDPOINTS
-  privileged: boolean   // true for admin-only endpoints (MANAGE_CLUBS, VIEW_ENDPOINTS) — grantable only in the coordination club
+  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS | MANAGE_USERS | VIEW_ENDPOINTS
+  privileged: boolean   // true for admin-only endpoints (MANAGE_CLUBS, MANAGE_USERS, VIEW_ENDPOINTS) — grantable only in the coordination club
 }
 
 // Club Profile (role template grouping multiple endpoints)
@@ -221,7 +222,7 @@ Returns the local profile of the authenticated user (looked up by the token's `s
 
 **PATCH** `/api/users/{userId}/role`
 
-**Authorization:** `ADMIN` only (`hasRole('ADMIN')`)
+**Authorization:** `ADMIN` or the `change_user_role` grantable endpoint (privileged — coordination club only; its president always has it)
 
 Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempotent: no-op if the user already has the target role).
 
@@ -237,6 +238,7 @@ Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempoten
 
 **Behavior:**
 
+- Registered as the `change_user_role` grantable endpoint (category `MANAGE_USERS`, `privileged = true`), so it can only be granted inside the **coordination club**. `ADMIN` and the coordination club president always pass, as does any coordination-club member holding the grant.
 - The change is made through the Keycloak Admin REST API using the `school_clubs_management_backend` service-account client.
 - No tokens are revoked and the user is **not** logged out. The realm uses a 180-second access-token lifetime, so the new role takes effect at the user's next token refresh (automatic, via the still-valid refresh token) — within ~3 minutes of the change.
 
@@ -245,7 +247,7 @@ Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempoten
 - `200 OK` — role updated
 - `400 Bad Request` — `role` is not `USER`/`STUDENT`
 - `401 Unauthorized` — missing/invalid token
-- `403 Forbidden` — caller is not an `ADMIN`
+- `403 Forbidden` — caller is neither `ADMIN` nor holds the `change_user_role` privileged endpoint
 - `404 Not Found` — no user with that `userId`
 
 ---
@@ -717,9 +719,11 @@ Hands the presidency to any user:
 
 ### Get My Club Memberships
 
-**GET** `/api/students/me/clubs`
+**GET** `/api/users/me/clubs`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** Bearer token (own memberships only)
+
+Returns every club the authenticated user currently belongs to, ordered by club name. The `profilePictureUrl` is a presigned S3 `GET` URL (expires after 15 minutes).
 
 **Response:** `200 OK`
 
@@ -727,18 +731,26 @@ Hands the presidency to any user:
 {
   "memberships": [
     {
+      "membershipId": 5,
       "clubName": "string",
       "clubFullName": "string",
-      "description": "string",
-      "profilePicture": {
-        "url": "string"
-      },
-      "clubRole": ClubRole,
-      "joinedDate": "string" // ISO 8601 date
+      "description": "string | null",
+      "isCoordinationClub": false,
+      "profilePictureUrl": "string | null",
+      "clubRole": "MEMBER",
+      "joinedDate": "2026-10-01T12:00:00.000+00:00"
     }
   ]
 }
 ```
+
+`joinedDate` is the membership's `started_at`. A user with no memberships gets `200 OK` with an empty `memberships` array.
+
+**Response Codes:**
+
+- `200 OK` — memberships returned (possibly empty)
+- `401 Unauthorized` — missing/invalid token
+- `404 Not Found` — no local user exists for the token's `sub`
 
 ---
 
@@ -1614,6 +1626,12 @@ Returns the **privileged** grantable endpoints (`privileged: true`).
     "name": "change_club_president",
     "description": "Change the president of a club",
     "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "change_user_role",
+    "description": "Change a user's realm role between USER and STUDENT",
+    "category": "MANAGE_USERS",
     "privileged": true
   },
   {
