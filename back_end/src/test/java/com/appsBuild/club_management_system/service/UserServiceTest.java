@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
+import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubResponse;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
 import com.appsBuild.club_management_system.exception.ApplicationException;
+import com.appsBuild.club_management_system.exception.impl.ConflictException;
 import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.ClubMembership;
@@ -69,6 +71,7 @@ class UserServiceTest {
     assertEquals("Doe", result.lastName());
     assertNull(result.profilePictureUrl());
     assertEquals(List.of("USER"), result.roles());
+    assertFalse(result.onboardingCompleted());
     verifyNoInteractions(storage);
   }
 
@@ -85,6 +88,77 @@ class UserServiceTest {
     assertEquals("https://s3.example.com/key.png", result.profilePictureUrl());
     assertEquals(List.of("STUDENT"), result.roles());
     verify(storage).presignGetUrl("key.png");
+  }
+
+  @Test
+  void updateCurrentUserProfile_normalizesFieldsAndCompletesOnboarding() {
+    when(clubAccessService.currentUser()).thenReturn(user);
+    when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
+
+    UserResponse result =
+        userService.updateCurrentUserProfile(
+            new UpdateProfileRequest(" NewUser ", "  Alice  ", "  Doe  "));
+
+    assertEquals("newuser", user.getUsername());
+    assertEquals("Alice", user.getFirstName());
+    assertEquals("Doe", user.getLastName());
+    assertTrue(user.isOnboardingCompleted());
+    assertEquals("newuser", result.username());
+    assertTrue(result.onboardingCompleted());
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  void updateCurrentUserProfile_allowsKeepingOwnUsername() {
+    when(clubAccessService.currentUser()).thenReturn(user);
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+
+    UserResponse result =
+        userService.updateCurrentUserProfile(new UpdateProfileRequest("alice", "Alice", "Doe"));
+
+    assertEquals("alice", user.getUsername());
+    assertTrue(result.onboardingCompleted());
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  void updateCurrentUserProfile_usernameTaken_throwsConflict() {
+    User other = User.builder().userId(2L).username("newuser").build();
+    when(clubAccessService.currentUser()).thenReturn(user);
+    when(userRepository.findByUsername("newuser")).thenReturn(Optional.of(other));
+
+    assertThrows(
+        ConflictException.class,
+        () ->
+            userService.updateCurrentUserProfile(
+                new UpdateProfileRequest("newuser", "Alice", "Doe")));
+
+    assertEquals("alice", user.getUsername());
+    assertFalse(user.isOnboardingCompleted());
+    verify(userRepository, never()).save(user);
+  }
+
+  @Test
+  void updateCurrentUserProfile_shortUsername_throwsApplicationException() {
+    when(clubAccessService.currentUser()).thenReturn(user);
+
+    assertThrows(
+        ApplicationException.class,
+        () -> userService.updateCurrentUserProfile(new UpdateProfileRequest("ab", "Alice", "Doe")));
+
+    verifyNoInteractions(userRepository);
+  }
+
+  @Test
+  void updateCurrentUserProfile_nullLastName_storesEmptyString() {
+    when(clubAccessService.currentUser()).thenReturn(user);
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+
+    UserResponse result =
+        userService.updateCurrentUserProfile(new UpdateProfileRequest("alice", "Alice", null));
+
+    assertEquals("", user.getLastName());
+    assertEquals("", result.lastName());
   }
 
   @Test

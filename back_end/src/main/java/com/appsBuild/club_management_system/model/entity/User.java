@@ -47,6 +47,10 @@ public class User {
   @Column(name = "role", nullable = false, length = 20)
   private String role = "USER";
 
+  @Builder.Default
+  @Column(name = "onboarding_completed", nullable = false)
+  private boolean onboardingCompleted = false;
+
   @Column(name = "created_at", nullable = false)
   private Date createdAt;
 

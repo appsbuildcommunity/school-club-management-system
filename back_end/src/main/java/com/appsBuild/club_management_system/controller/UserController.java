@@ -2,6 +2,7 @@ package com.appsBuild.club_management_system.controller;
 
 import com.appsBuild.club_management_system.annotation.Grantable;
 import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
+import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UpdateRoleRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
@@ -29,6 +30,12 @@ public class UserController {
   @GetMapping("/me")
   public ResponseEntity<UserResponse> getCurrentUser() {
     return ResponseEntity.ok(userService.getCurrentUser());
+  }
+
+  @PatchMapping("/me")
+  public ResponseEntity<UserResponse> updateCurrentUser(
+      @Valid @RequestBody UpdateProfileRequest request) {
+    return ResponseEntity.ok(userService.updateCurrentUserProfile(request));
   }
 
   @PatchMapping("/{userId}/role")

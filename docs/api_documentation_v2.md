@@ -185,14 +185,140 @@ interface SourceProfile {
 
 ## Authentication
 
-Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PKCE for the Flutter app). The back end is a pure **resource server**: every protected endpoint requires a valid JWT access token from Keycloak via the `Authorization: Bearer <token>` header.
+Users sign in with Google or Facebook. The back end acts as an OAuth2 client, resolves the provider identity to a local `users` row, and issues its own HMAC-signed JWT access token plus an opaque rotating refresh token. Protected endpoints accept the access token as `Authorization: Bearer <token>`. The sign-in UI and the post-login route live in the frontend; the back end only performs the provider handshake.
 
-- The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
-- Authorities are derived from the token's `realm_access.roles` claim (e.g. `USER`, `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
-- A newly registered user gets the `USER` realm role (default). `STUDENT` and `ADMIN` are additional realm roles.
-- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook (see **Keycloak Webhook** section below). This endpoint is idempotent.
-- `POST /verify` remains public for the S3 upload-verification test flow.
-- Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
+### Provider discovery
+
+**GET** `/api/auth/providers`
+
+**Authorization:** None
+
+Tells the frontend which sign-in buttons to render. A provider is `true` only when both its client id and client secret are configured.
+
+**Response:** `200 OK`
+
+```json
+{
+  "google": true,
+  "facebook": false
+}
+```
+
+### Sign-in flow
+
+1. The frontend sends the browser to one of:
+   - `GET /oauth2/authorization/google`
+   - `GET /oauth2/authorization/facebook`
+2. Complete the provider consent screen. The provider redirects to
+   `GET /login/oauth2/code/{registrationId}`.
+3. The back end creates or loads the local user and redirects to `APP_AUTH_REDIRECT_URI`, a frontend route, with the access and refresh tokens in the fragment:
+
+   ```text
+   http://localhost:5173/auth/callback#access_token=<jwt>&refresh_token=<refresh-token>&token_type=Bearer&expires_in=3600&onboarding_required=true
+   ```
+
+   `onboarding_required` is `true` until the user saves the onboarding form once, then `false`.
+
+   On failure:
+
+   ```text
+   #error=<code>&error_description=<message>
+   ```
+
+4. The frontend callback route reads `access_token`, `refresh_token`, `onboarding_required` (or `error`) from `window.location.hash`, stores the tokens, and removes the fragment from the address bar.
+5. If `onboarding_required` is `true`, the frontend loads `GET /api/users/me`, renders the prefilled onboarding form, and submits it to `PATCH /api/users/me`.
+
+The fragment is never sent to a server. A one-time code exchange is the recommended follow-up.
+
+### Access token
+
+- Algorithm: `HS256`
+- Default lifetime: `PT1H` (`app.jwt.access-ttl`)
+- `sub`: local `users.user_id`
+- `roles`: array containing the local role (`USER`, `STUDENT`, or `ADMIN`)
+- `iss` / `aud`: `app.jwt.issuer` / `app.jwt.audience`
+
+Roles are local database state. `ClubAccessService` resolves the current user by `sub`; controllers use `hasRole('ADMIN')` etc.
+
+### Token lifecycle
+
+- Access tokens are short-lived (default `PT1H`, `JWT_ACCESS_TTL`). Refresh tokens are opaque, long-lived (`P30D`, `JWT_REFRESH_TTL`) and are only stored as a SHA-256 hash in `refresh_token`.
+- After a successful social sign-in, the back end redirects to `APP_AUTH_REDIRECT_URI` with both tokens in the fragment:
+
+  ```text
+  http://localhost:5173/auth/callback#access_token=<jwt>&refresh_token=<refresh-token>&token_type=Bearer&expires_in=3600&onboarding_required=false
+  ```
+
+- Rotate a refresh token: `POST /api/auth/refresh`. The endpoint is public, revokes the old refresh token, issues a new one, and returns a new access token.
+
+  **Request:**
+  ```json
+  {
+    "refreshToken": "<refresh-token>"
+  }
+  ```
+
+  **Response:** `200 OK`
+  ```json
+  {
+    "accessToken": "<jwt>",
+    "refreshToken": "<rotated-refresh-token>",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  }
+  ```
+
+  **Errors:** `400 Bad Request` when `refreshToken` is missing; `401 Unauthorized` when the token is invalid, expired, or already used.
+
+- Revoke a refresh token on sign-out: `POST /api/auth/logout`. The endpoint is public, is idempotent, and returns `204 No Content`. Revoking a refresh token does **not** invalidate an already-issued access token; rely on the short access-token TTL. A missing `refreshToken` returns `400 Bad Request`; an unknown token still returns `204`.
+
+  **Request:**
+  ```json
+  {
+    "refreshToken": "<refresh-token>"
+  }
+  ```
+
+- **Reuse detection:** if a refresh token that has already been revoked is used, the back end revokes every active refresh token for that user and returns `401 Unauthorized` with `code` `UNAUTHORIZED`. This helps contain token theft.
+
+- `/api/auth/refresh` and `/api/auth/logout` remain public; `/verify` and `/api/auth/providers` remain public.
+
+### Local account rules
+
+- A provider identity is stored in `oauth_account`, keyed by `(provider, provider_subject)`.
+- First sign-in provisions a local user with role `USER`, an email-derived username, provider-derived names, and `onboarding_completed = false`.
+- The client saves the onboarding form through `PATCH /api/users/me`, which sets `onboarding_completed = true`. Later sign-ins return `onboarding_required = false`.
+- Emails listed in `BOOTSTRAP_ADMIN_EMAILS` receive `ADMIN` on first sign-in.
+- An existing local email is **not** auto-linked to a new provider. The service rejects it with `409 CONFLICT`; in the browser flow the frontend receives `#error=account_error&error_description=...`. The user must sign in with the original provider. Explicit account linking is a future authenticated action.
+- Google is OIDC and its verified email flag is stored. Facebook is OAuth2-only and is treated as unverified.
+
+### Configuration
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth client |
+| `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` | Facebook app |
+| `FACEBOOK_GRAPH_VERSION` | Graph API version, default `v23.0` |
+| `OAUTH2_REDIRECT_BASE_URL` | Public base URL for provider callbacks |
+| `APP_AUTH_REDIRECT_URI` | Frontend callback route; tokens/error arrive in the fragment |
+| `BOOTSTRAP_ADMIN_EMAILS` | Comma-separated first-login admins |
+| `JWT_SECRET` | HMAC key, at least 32 bytes |
+| `JWT_ACCESS_TTL` | ISO-8601 lifetime, default `PT1H` |
+| `JWT_REFRESH_TTL` | ISO-8601 refresh-token lifetime, default `P30D` |
+
+Provider console redirect URIs:
+
+- `http://localhost:8080/login/oauth2/code/google`
+- `http://localhost:8080/login/oauth2/code/facebook`
+
+### Development
+
+- No sign-in pages are served by the back end. The frontend owns the sign-in UI and callback route.
+- Point `APP_AUTH_REDIRECT_URI` at the frontend callback (default `http://localhost:5173/auth/callback`).
+- The OAuth2 login chain and JWT resource server are always enabled; no Spring profile is required.
+- `/verify`, `/api/auth/providers`, `/api/auth/refresh`, and `/api/auth/logout` remain public.
+
+See `docs/oauth_setup.md` for provider console steps.
 
 ### Current User
 
@@ -200,7 +326,7 @@ Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PK
 
 **Authorization:** Bearer token
 
-Returns the local profile of the authenticated user (looked up by the token's `sub` claim), plus the roles present in the token's `realm_access.roles` claim.
+Returns the local profile of the authenticated user (looked up by the token's `sub` claim, which is the local `user_id`), plus the user's role and onboarding state.
 
 **Response:** `200 OK`
 
@@ -212,9 +338,57 @@ Returns the local profile of the authenticated user (looked up by the token's `s
   "firstName": "string",
   "lastName": "string",
   "profilePictureUrl": "string | null",
-  "roles": ["USER"]
+  "roles": ["USER"],
+  "onboardingCompleted": false
 }
 ```
+
+---
+
+### Update Current User Profile
+
+**PATCH** `/api/users/me`
+
+**Authorization:** Bearer token
+
+Saves the onboarding/profile form for the authenticated user. This is the endpoint the frontend calls after social sign-in when `onboarding_required=true`. It can also be reused later for profile edits.
+
+The username is trimmed and normalized to lowercase. The first and last names are trimmed. Once saved, `onboardingCompleted` becomes `true`, so the onboarding form is skipped on later sign-ins.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "firstName": "string",
+  "lastName": "string"
+}
+```
+
+- `username`: required, 3–50 characters, letters/numbers/`.`/`_`/`-`, unique
+- `firstName`: required, maximum 50 characters
+- `lastName`: optional, maximum 50 characters
+
+**Response:** `200 OK`
+
+```json
+{
+  "userId": 1,
+  "username": "string",
+  "email": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "profilePictureUrl": "string | null",
+  "roles": ["USER"],
+  "onboardingCompleted": true
+}
+```
+
+**Errors:**
+
+- `400 BAD_REQUEST`: missing/invalid field
+- `409 CONFLICT`: username is already taken
+- `401 UNAUTHORIZED`: missing or expired access token
 
 ---
 
@@ -224,7 +398,7 @@ Returns the local profile of the authenticated user (looked up by the token's `s
 
 **Authorization:** `ADMIN` or the `change_user_role` grantable endpoint (privileged — coordination club only; its president always has it)
 
-Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempotent: no-op if the user already has the target role).
+Switches a user's local role between `USER` and `STUDENT` (idempotent: no-op if the user already has the target role).
 
 **Request Body:**
 
@@ -234,13 +408,13 @@ Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempoten
 }
 ```
 
-`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` assignment stays in the Keycloak admin console.
+`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` is assigned by an administrator.
 
 **Behavior:**
 
 - Registered as the `change_user_role` grantable endpoint (category `MANAGE_USERS`, `privileged = true`), so it can only be granted inside the **coordination club**. `ADMIN` and the coordination club president always pass, as does any coordination-club member holding the grant.
-- The change is made through the Keycloak Admin REST API using the `school_clubs_management_backend` service-account client.
-- No tokens are revoked and the user is **not** logged out. The realm uses a 180-second access-token lifetime, so the new role takes effect at the user's next token refresh (automatic, via the still-valid refresh token) — within ~3 minutes of the change.
+- The change is persisted to the local `users.role` column.
+- Access checks that read the local user record reflect the change immediately. Existing sessions that carry a `roles` claim may retain the previous role until the token is refreshed.
 
 **Responses:**
 
@@ -268,50 +442,6 @@ Returns a presigned S3 `PUT` URL (and the object `key`) so the app can upload th
   "key": "string"
 }
 ```
-
----
-
-## Keycloak Webhook
-
-### User Registered Webhook
-
-**POST** `/api/webhooks/keycloak/user-registered`
-
-**Authorization:** HTTP Basic Auth (`KEYCLOAK_WEBHOOK_USERNAME` / `KEYCLOAK_WEBHOOK_PASSWORD`)
-
-Called by Keycloak when a new user completes registration. Creates or syncs the local `users` row (Keycloak `sub` stored as `users.keycloak_sub`, unique). Idempotent — no-op if the user already exists.
-
-**Request Body:**
-
-```json
-{
-  "type": "REGISTER",
-  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "details": {
-    "username": "johndoe",
-    "email": "john@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  }
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Event type (`REGISTER`) |
-| `userId` | string | Keycloak user `sub` claim |
-| `details.username` | string | Keycloak username |
-| `details.email` | string | User email |
-| `details.first_name` | string | First name (note: underscore-separated in webhook payload) |
-| `details.last_name` | string | Last name (note: underscore-separated in webhook payload) |
-
-**Response:** `204 No Content`
-
-**Response Codes:**
-
-- `204 No Content` — user created or already exists (idempotent)
-- `401 Unauthorized` — invalid Basic Auth credentials
-- `400 Bad Request` — malformed event payload
 
 ---
 

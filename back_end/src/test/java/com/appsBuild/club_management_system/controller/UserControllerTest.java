@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
+import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UpdateRoleRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubResponse;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
@@ -74,7 +75,7 @@ class UserControllerTest {
     when(userService.getCurrentUser())
         .thenReturn(
             new UserResponse(
-                1L, "alice", "alice@example.com", "Alice", "Doe", null, List.of("USER")));
+                1L, "alice", "alice@example.com", "Alice", "Doe", null, List.of("USER"), false));
 
     mockMvc
         .perform(get("/api/users/me"))
@@ -82,7 +83,60 @@ class UserControllerTest {
         .andExpect(jsonPath("$.userId").value(1))
         .andExpect(jsonPath("$.username").value("alice"))
         .andExpect(jsonPath("$.profilePictureUrl").doesNotExist())
-        .andExpect(jsonPath("$.roles[0]").value("USER"));
+        .andExpect(jsonPath("$.roles[0]").value("USER"))
+        .andExpect(jsonPath("$.onboardingCompleted").value(false));
+  }
+
+  // ── updateCurrentUser ───────────────────────────────────────────────
+
+  @Test
+  void updateCurrentUser_returnsUpdatedProfile() throws Exception {
+    UpdateProfileRequest request = new UpdateProfileRequest("alice", "Alice", "Doe");
+    when(userService.updateCurrentUserProfile(request))
+        .thenReturn(
+            new UserResponse(
+                1L, "alice", "alice@example.com", "Alice", "Doe", null, List.of("USER"), true));
+
+    mockMvc
+        .perform(
+            patch("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username").value("alice"))
+        .andExpect(jsonPath("$.firstName").value("Alice"))
+        .andExpect(jsonPath("$.lastName").value("Doe"))
+        .andExpect(jsonPath("$.onboardingCompleted").value(true));
+
+    verify(userService).updateCurrentUserProfile(request);
+  }
+
+  @Test
+  void updateCurrentUser_blankUsername_returns400() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new UpdateProfileRequest("", "Alice", "Doe"))))
+        .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(userService);
+  }
+
+  @Test
+  void updateCurrentUser_usernameWithSpaces_returns400() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new UpdateProfileRequest("alice smith", "Alice", "Smith"))))
+        .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(userService);
   }
 
   // ── updateRole ──────────────────────────────────────────────────────

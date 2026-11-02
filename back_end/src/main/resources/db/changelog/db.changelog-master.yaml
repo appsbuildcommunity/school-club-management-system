@@ -51,3 +51,9 @@ databaseChangeLog:
       file: db/changelog/migrations/026-add-on-delete-cascade-to-club-membership-endpoint.sql
   - include:
       file: db/changelog/migrations/027-rename-endpoint-table-to-grantable-endpoint.sql
+  - include:
+      file: db/changelog/migrations/028-create-oauth-account-table.sql
+  - include:
+      file: db/changelog/migrations/029-create-refresh-token-table.sql
+  - include:
+      file: db/changelog/migrations/030-add-onboarding-completed-to-users.sql

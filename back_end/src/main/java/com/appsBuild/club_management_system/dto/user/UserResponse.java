@@ -9,4 +9,5 @@ public record UserResponse(
     String firstName,
     String lastName,
     String profilePictureUrl,
-    List<String> roles) {}
+    List<String> roles,
+    boolean onboardingCompleted) {}
