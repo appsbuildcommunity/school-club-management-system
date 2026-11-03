@@ -4,7 +4,7 @@ import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.ClubMembership;
 import com.appsBuild.club_management_system.model.entity.ClubMembershipProfile;
-import com.appsBuild.club_management_system.model.entity.Endpoint;
+import com.appsBuild.club_management_system.model.entity.GrantableEndpoint;
 import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
@@ -12,13 +12,12 @@ import com.appsBuild.club_management_system.repository.ClubMembershipEndpointRep
 import com.appsBuild.club_management_system.repository.ClubMembershipProfileRepository;
 import com.appsBuild.club_management_system.repository.ClubMembershipRepository;
 import com.appsBuild.club_management_system.repository.ClubRepository;
-import com.appsBuild.club_management_system.repository.EndpointRepository;
+import com.appsBuild.club_management_system.repository.GrantableEndpointRepository;
 import com.appsBuild.club_management_system.repository.UserRepository;
 
 import lombok.AllArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +36,7 @@ public class ClubAccessService {
 
   private final UserRepository userRepository;
   private final ClubRepository clubRepository;
-  private final EndpointRepository endpointRepository;
+  private final GrantableEndpointRepository grantableEndpointRepository;
   private final ClubMembershipRepository clubMembershipRepository;
   private final ClubMembershipEndpointRepository clubMembershipEndpointRepository;
   private final ClubMembershipProfileRepository clubMembershipProfileRepository;
@@ -54,12 +53,15 @@ public class ClubAccessService {
   /** Resolves the application user backing the current JWT, or fails with a 404. */
   public User currentUser() {
     Jwt jwt = getJwt();
+    Long userId;
+    try {
+      userId = Long.valueOf(jwt.getSubject());
+    } catch (NumberFormatException e) {
+      throw new NotFoundException("Invalid user subject: " + jwt.getSubject());
+    }
     return userRepository
-        .findByKeycloakSub(jwt.getSubject())
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    "User not found for keycloak subject: " + jwt.getSubject()));
+        .findById(userId)
+        .orElseThrow(() -> new NotFoundException("User not found: " + userId));
   }
 
   /** True if the JWT belongs to the given user id. */
@@ -67,9 +69,14 @@ public class ClubAccessService {
     return currentUser().getUserId().equals(userId);
   }
 
-  /** True if the JWT carries the realm ADMIN role. */
+  /** True if the current user has the ADMIN role. */
   public boolean isAdmin() {
-    return rolesFromJwt(getJwt()).contains(ADMIN_ROLE);
+    return ADMIN_ROLE.equals(currentUser().getRole());
+  }
+
+  /** Roles of the current user. */
+  public List<String> roles() {
+    return List.of(currentUser().getRole());
   }
 
   /** Returns the coordination club's id, or fails with a 404 if it has not been created yet. */
@@ -86,10 +93,7 @@ public class ClubAccessService {
    * club) and the caller must either be the club president or hold a grant for it.
    */
   public boolean hasEndpoint(Long clubId, String endpointName) {
-    if (isAdmin()) {
-      return true;
-    }
-    Endpoint endpoint = resolveEndpoint(endpointName);
+    GrantableEndpoint endpoint = resolveEndpoint(endpointName);
     if (endpoint.isPrivileged() && !clubId.equals(coordinationClubId())) {
       return false;
     }
@@ -111,11 +115,17 @@ public class ClubAccessService {
     return hasProfileEndpoint(mid, endpointName);
   }
 
+  /**
+   * True if the caller may use the given privileged endpoint. Privileged endpoints live in the
+   * coordination club only, so the check is scoped to it: ADMIN always wins; otherwise the caller
+   * must be its president or hold a grant for the endpoint.
+   */
+  public boolean hasCoordinationEndpoint(String endpointName) {
+    return hasEndpoint(coordinationClubId(), endpointName);
+  }
+
   /** True if the caller is the coordination club president (or ADMIN). */
   public boolean isCoordinationClubPresident() {
-    if (isAdmin()) {
-      return true;
-    }
     return isPresidentOfClub(coordinationClubId());
   }
 
@@ -136,9 +146,6 @@ public class ClubAccessService {
 
   /** True if the caller holds at least one privilege in the given category within the club. */
   public boolean hasCategoryPrivilege(Long clubId, Category category) {
-    if (isAdmin()) {
-      return true;
-    }
     Optional<ClubMembership> membership =
         clubMembershipRepository.findByUser_UserIdAndClub_ClubId(
             currentUser().getUserId(), clubId);
@@ -161,7 +168,7 @@ public class ClubAccessService {
     List<ClubMembershipProfile> profiles =
         clubMembershipProfileRepository.findByClubMembership_MembershipId(membershipId);
     for (ClubMembershipProfile cmp : profiles) {
-      for (Endpoint ep : cmp.getClubProfile().getEndpoints()) {
+      for (GrantableEndpoint ep : cmp.getClubProfile().getEndpoints()) {
         if (ep.getName().equals(endpointName)) {
           return true;
         }
@@ -174,7 +181,7 @@ public class ClubAccessService {
     List<ClubMembershipProfile> profiles =
         clubMembershipProfileRepository.findByClubMembership_MembershipId(membershipId);
     for (ClubMembershipProfile cmp : profiles) {
-      for (Endpoint ep : cmp.getClubProfile().getEndpoints()) {
+      for (GrantableEndpoint ep : cmp.getClubProfile().getEndpoints()) {
         if (ep.getCategory() == category) {
           return true;
         }
@@ -183,8 +190,8 @@ public class ClubAccessService {
     return false;
   }
 
-  private Endpoint resolveEndpoint(String endpointName) {
-    return endpointRepository
+  private GrantableEndpoint resolveEndpoint(String endpointName) {
+    return grantableEndpointRepository
         .findByName(endpointName)
         .orElseThrow(() -> new NotFoundException("Endpoint not found: " + endpointName));
   }
@@ -196,11 +203,4 @@ public class ClubAccessService {
         .orElse(false);
   }
 
-  private List<String> rolesFromJwt(Jwt jwt) {
-    Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
-    if (realmAccess == null || !(realmAccess.get("roles") instanceof List<?> roles)) {
-      return List.of();
-    }
-    return roles.stream().map(String::valueOf).toList();
-  }
 }

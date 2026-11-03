@@ -27,8 +27,8 @@ enum Visibility {
 
 enum AttachmentType {
   IMAGE = 'IMAGE',
+  PDF = 'PDF',
   VIDEO = 'VIDEO',
-  DOCUMENT = 'DOCUMENT',
 }
 
 enum DemandStatus {
@@ -43,6 +43,8 @@ enum Category {
   MANAGE_EVENTS = 'MANAGE_EVENTS',
   MANAGE_MEMBERS = 'MANAGE_MEMBERS',
   MANAGE_CLUBS = 'MANAGE_CLUBS',
+  MANAGE_USERS = 'MANAGE_USERS',
+  VIEW_ENDPOINTS = 'VIEW_ENDPOINTS',
 }
 ```
 
@@ -105,19 +107,42 @@ interface Member {
   username: string
   firstName: string
   lastName: string
-  profilePicture?: {
-    url: string
-  }
-  role: ClubRole
-  roleDescription?: string
+  profilePictureUrl?: string // presigned S3 GET URL (expires after 15 minutes)
+  role: ClubRole             // no roleDescription returned by the current API
+}
+
+// Club CRUD
+interface ClubRequest {
+  clubName: string            // required, max 100 chars (@NotBlank @Size(max=100))
+  clubFullName?: string       // max 200 chars
+  description?: string        // max 1000 chars
+  presidentUsername?: string  // optional first president, valid on both create endpoints
+}
+
+interface PresidentRequest {
+  presidentUsername: string   // required (@NotBlank)
+}
+
+interface ClubResponse {
+  clubId: number
+  clubName: string
+  clubFullName?: string
+  description?: string
+  isCoordinationClub: boolean
+  profilePictureUrl?: string // presigned S3 GET URL (expires after 15 minutes)
+  memberCount: number
+}
+
+interface ClubDetailResponse extends ClubResponse {
+  staff: Member[]            // CLUB_PRESIDENT + ASSISTANT_MEMBER only
 }
 
 // Endpoint (grantable API capability)
 interface EndpointResponse {
   name: string          // unique identifier, e.g. "manage_profiles"
   description: string   // human-readable description
-  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS
-  privileged: boolean   // true only for MANAGE_CLUBS (admin-only endpoints)
+  category: Category    // MANAGE_POSTS | MANAGE_EVENTS | MANAGE_MEMBERS | MANAGE_CLUBS | MANAGE_USERS | VIEW_ENDPOINTS
+  privileged: boolean   // true for admin-only endpoints (MANAGE_CLUBS, MANAGE_USERS, VIEW_ENDPOINTS) — grantable only in the coordination club
 }
 
 // Club Profile (role template grouping multiple endpoints)
@@ -160,14 +185,142 @@ interface SourceProfile {
 
 ## Authentication
 
-Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PKCE for the Flutter app). The back end is a pure **resource server**: every protected endpoint requires a valid JWT access token from Keycloak via the `Authorization: Bearer <token>` header.
+Users sign in with Google or Facebook. The back end acts as an OAuth2 client, resolves the provider identity to a local `users` row, and issues its own HMAC-signed JWT access token plus an opaque rotating refresh token. Protected endpoints accept the access token as `Authorization: Bearer <token>`. The sign-in UI and the post-login route live in the frontend; the back end only performs the provider handshake.
 
-- The token issuer is the realm `school_clubs_management_system` at `http://localhost:8082/realms/school_clubs_management_system` (`KEYCLOAK_ISSUER_URI`).
-- Authorities are derived from the token's `realm_access.roles` claim (e.g. `USER`, `STUDENT`, `ADMIN`), mapped to Spring Security `ROLE_*` authorities. The DB `users` table is **not** the identity source.
-- A newly registered user gets the `USER` realm role (default). `STUDENT` and `ADMIN` are additional realm roles.
-- When a user registers through Keycloak, Keycloak fires a `REGISTER` event to the back end webhook (see **Keycloak Webhook** section below). This endpoint is idempotent.
-- `POST /verify` remains public for the S3 upload-verification test flow.
-- Since the resource server is only active for the **non-`Test`** Spring profile, the endpoints described in the earlier `v1` document (`/api/auth/register`, `/api/auth/login`, ...) no longer exist in the current build.
+### Provider discovery
+
+**GET** `/api/auth/providers`
+
+**Authorization:** None
+
+Tells the frontend which sign-in buttons to render. A provider is `true` only when both its client id and client secret are configured.
+
+**Response:** `200 OK`
+
+```json
+{
+  "google": true,
+  "facebook": false
+}
+```
+
+### Sign-in flow
+
+1. The frontend sends the browser to one of:
+   - `GET /oauth2/authorization/google`
+   - `GET /oauth2/authorization/facebook`
+2. Complete the provider consent screen. The provider redirects to
+   `GET /login/oauth2/code/{registrationId}`.
+3. The back end creates or loads the local user and redirects to `APP_AUTH_REDIRECT_URI`, a frontend route, with the access and refresh tokens in the fragment:
+
+   ```text
+   http://localhost:5173/auth/callback#access_token=<jwt>&refresh_token=<refresh-token>&token_type=Bearer&expires_in=3600&onboarding_required=true
+   ```
+
+   `onboarding_required` is `true` until the user saves the onboarding form once, then `false`.
+
+   On failure:
+
+   ```text
+   #error=<code>&error_description=<message>
+   ```
+
+4. The frontend callback route reads `access_token`, `refresh_token`, `onboarding_required` (or `error`) from `window.location.hash`, stores the tokens, and removes the fragment from the address bar.
+5. If `onboarding_required` is `true`, the frontend loads `GET /api/users/me`, renders the prefilled onboarding form, and submits it to `PATCH /api/users/me`.
+
+The fragment is never sent to a server. A one-time code exchange is the recommended follow-up.
+
+### Access token
+
+- Algorithm: `HS256`
+- Default lifetime: `PT1H` (`app.jwt.access-ttl`)
+- `sub`: local `users.user_id`
+- `roles`: array containing the local role (`USER`, `STUDENT`, or `ADMIN`)
+- `iss` / `aud`: `app.jwt.issuer` / `app.jwt.audience`
+
+Roles are local database state. `ClubAccessService` resolves the current user by `sub`; controllers use `hasRole('ADMIN')` etc.
+
+### Token lifecycle
+
+- Access tokens are short-lived (default `PT1H`, `JWT_ACCESS_TTL`). Refresh tokens are opaque, long-lived (`P30D`, `JWT_REFRESH_TTL`) and are only stored as a SHA-256 hash in `refresh_token`.
+- After a successful social sign-in, the back end redirects to `APP_AUTH_REDIRECT_URI` with both tokens in the fragment:
+
+  ```text
+  http://localhost:5173/auth/callback#access_token=<jwt>&refresh_token=<refresh-token>&token_type=Bearer&expires_in=3600&onboarding_required=false
+  ```
+
+- Rotate a refresh token: `POST /api/auth/refresh`. The endpoint is public, revokes the old refresh token, issues a new one, and returns a new access token.
+
+  **Request:**
+  ```json
+  {
+    "refreshToken": "<refresh-token>"
+  }
+  ```
+
+  **Response:** `200 OK`
+  ```json
+  {
+    "accessToken": "<jwt>",
+    "refreshToken": "<rotated-refresh-token>",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  }
+  ```
+
+  **Errors:** `400 Bad Request` when `refreshToken` is missing; `401 Unauthorized` when the token is invalid, expired, or already used.
+
+- Revoke a refresh token on sign-out: `POST /api/auth/logout`. The endpoint is public, is idempotent, and returns `204 No Content`. Revoking a refresh token does **not** invalidate an already-issued access token; rely on the short access-token TTL. A missing `refreshToken` returns `400 Bad Request`; an unknown token still returns `204`.
+
+  **Request:**
+  ```json
+  {
+    "refreshToken": "<refresh-token>"
+  }
+  ```
+
+- **Reuse detection:** if a refresh token that has already been revoked is used, the back end revokes every active refresh token for that user and returns `401 Unauthorized` with `code` `UNAUTHORIZED`. This helps contain token theft.
+
+- `/api/auth/refresh` and `/api/auth/logout` remain public;`/api/auth/providers` remain public.
+
+### Local account rules
+
+- A provider identity is stored in `oauth_account`, keyed by `(provider, provider_subject)`.
+- First sign-in provisions a local user with role `USER`, an email-derived username, provider-derived names, and `onboarding_completed = false`.
+- The client saves the onboarding form through `PATCH /api/users/me`, which sets `onboarding_completed = true`. Later sign-ins return `onboarding_required = false`.
+- Emails listed in `BOOTSTRAP_ADMIN_EMAILS` receive `ADMIN` on first sign-in.
+- An existing local email is **not** auto-linked to a new provider. The service rejects it with `409 CONFLICT`; in the browser flow the frontend receives `#error=account_error&error_description=...`. The user must sign in with the original provider. Explicit account linking is a future authenticated action.
+- Google is OIDC and its verified email flag is stored. Facebook is OAuth2-only and is treated as unverified.
+
+### Configuration
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth client |
+| `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` | Facebook app |
+| `FACEBOOK_GRAPH_VERSION` | Graph API version, default `v23.0` |
+| `OAUTH2_REDIRECT_BASE_URL` | Public base URL for provider callbacks |
+| `APP_AUTH_REDIRECT_URI` | Frontend callback route; tokens/error arrive in the fragment |
+| `BOOTSTRAP_ADMIN_EMAILS` | Comma-separated first-login admins |
+| `JWT_SECRET` | HMAC key, at least 32 bytes |
+| `JWT_ACCESS_TTL` | ISO-8601 lifetime, default `PT1H` |
+| `JWT_REFRESH_TTL` | ISO-8601 refresh-token lifetime, default `P30D` |
+| `JWT_ISSUER` | Access-token `iss` claim, default `club-management-system` |
+| `JWT_AUDIENCE` | Access-token `aud` claim, default `club-management-system-api` |
+
+Provider console redirect URIs:
+
+- `http://localhost:8080/login/oauth2/code/google`
+- `http://localhost:8080/login/oauth2/code/facebook`
+
+### Development
+
+- No sign-in pages are served by the back end. The frontend owns the sign-in UI and callback route.
+- Point `APP_AUTH_REDIRECT_URI` at the frontend callback (default `http://localhost:5173/auth/callback`).
+- The OAuth2 login chain and JWT resource server are always enabled; no Spring profile is required.
+- `/api/auth/providers`, `/api/auth/refresh`, and `/api/auth/logout` remain public.
+
+See `docs/oauth_setup.md` for provider console steps.
 
 ### Current User
 
@@ -175,7 +328,7 @@ Authentication is delegated to Keycloak (OpenID Connect, Authorization Code + PK
 
 **Authorization:** Bearer token
 
-Returns the local profile of the authenticated user (looked up by the token's `sub` claim), plus the roles present in the token's `realm_access.roles` claim.
+Returns the local profile of the authenticated user (looked up by the token's `sub` claim, which is the local `user_id`), plus the user's role and onboarding state.
 
 **Response:** `200 OK`
 
@@ -187,9 +340,57 @@ Returns the local profile of the authenticated user (looked up by the token's `s
   "firstName": "string",
   "lastName": "string",
   "profilePictureUrl": "string | null",
-  "roles": ["USER"]
+  "roles": ["USER"],
+  "onboardingCompleted": false
 }
 ```
+
+---
+
+### Update Current User Profile
+
+**PATCH** `/api/users/me`
+
+**Authorization:** Bearer token
+
+Saves the onboarding/profile form for the authenticated user. This is the endpoint the frontend calls after social sign-in when `onboarding_required=true`. It can also be reused later for profile edits.
+
+The username is trimmed and normalized to lowercase. The first and last names are trimmed. Once saved, `onboardingCompleted` becomes `true`, so the onboarding form is skipped on later sign-ins.
+
+**Request Body:**
+
+```json
+{
+  "username": "string",
+  "firstName": "string",
+  "lastName": "string"
+}
+```
+
+- `username`: required, 3–50 characters, letters/numbers/`.`/`_`/`-`, unique
+- `firstName`: required, maximum 50 characters
+- `lastName`: optional, maximum 50 characters
+
+**Response:** `200 OK`
+
+```json
+{
+  "userId": 1,
+  "username": "string",
+  "email": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "profilePictureUrl": "string | null",
+  "roles": ["USER"],
+  "onboardingCompleted": true
+}
+```
+
+**Errors:**
+
+- `400 BAD_REQUEST`: missing/invalid field
+- `409 CONFLICT`: username is already taken
+- `401 UNAUTHORIZED`: missing or expired access token
 
 ---
 
@@ -197,9 +398,9 @@ Returns the local profile of the authenticated user (looked up by the token's `s
 
 **PATCH** `/api/users/{userId}/role`
 
-**Authorization:** `ADMIN` only (`hasRole('ADMIN')`)
+**Authorization:** `ADMIN` or the `change_user_role` grantable endpoint (privileged — coordination club only; its president always has it)
 
-Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempotent: no-op if the user already has the target role).
+Switches a user's local role between `USER` and `STUDENT` (idempotent: no-op if the user already has the target role).
 
 **Request Body:**
 
@@ -209,19 +410,20 @@ Switches a user's realm role between `USER` and `STUDENT` in Keycloak (idempoten
 }
 ```
 
-`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` assignment stays in the Keycloak admin console.
+`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` is only granted during bootstrapping through `BOOTSTRAP_ADMIN_EMAILS` on the user's first sign-in.
 
 **Behavior:**
 
-- The change is made through the Keycloak Admin REST API using the `school_clubs_management_backend` service-account client.
-- No tokens are revoked and the user is **not** logged out. The realm uses a 180-second access-token lifetime, so the new role takes effect at the user's next token refresh (automatic, via the still-valid refresh token) — within ~3 minutes of the change.
+- Registered as the `change_user_role` grantable endpoint (category `MANAGE_USERS`, `privileged = true`), so it can only be granted inside the **coordination club**. `ADMIN` and the coordination club president always pass, as does any coordination-club member holding the grant.
+- The change is persisted to the local `users.role` column.
+- Access checks that read the local user record reflect the change immediately. Existing sessions that carry a `roles` claim may retain the previous role until the token is refreshed.
 
 **Responses:**
 
 - `200 OK` — role updated
 - `400 Bad Request` — `role` is not `USER`/`STUDENT`
 - `401 Unauthorized` — missing/invalid token
-- `403 Forbidden` — caller is not an `ADMIN`
+- `403 Forbidden` — caller is neither `ADMIN` nor holds the `change_user_role` privileged endpoint
 - `404 Not Found` — no user with that `userId`
 
 ---
@@ -245,74 +447,45 @@ Returns a presigned S3 `PUT` URL (and the object `key`) so the app can upload th
 
 ---
 
-## Keycloak Webhook
-
-### User Registered Webhook
-
-**POST** `/api/webhooks/keycloak/user-registered`
-
-**Authorization:** HTTP Basic Auth (`KEYCLOAK_WEBHOOK_USERNAME` / `KEYCLOAK_WEBHOOK_PASSWORD`)
-
-Called by Keycloak when a new user completes registration. Creates or syncs the local `users` row (Keycloak `sub` stored as `users.keycloak_sub`, unique). Idempotent — no-op if the user already exists.
-
-**Request Body:**
-
-```json
-{
-  "type": "REGISTER",
-  "userId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "details": {
-    "username": "johndoe",
-    "email": "john@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  }
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Event type (`REGISTER`) |
-| `userId` | string | Keycloak user `sub` claim |
-| `details.username` | string | Keycloak username |
-| `details.email` | string | User email |
-| `details.first_name` | string | First name (note: underscore-separated in webhook payload) |
-| `details.last_name` | string | Last name (note: underscore-separated in webhook payload) |
-
-**Response:** `204 No Content`
-
-**Response Codes:**
-
-- `204 No Content` — user created or already exists (idempotent)
-- `401 Unauthorized` — invalid Basic Auth credentials
-- `400 Bad Request` — malformed event payload
-
----
-
 ## Club Endpoints
+
+Club CRUD and president management. All mutation endpoints below register as grantable endpoints in the `MANAGE_CLUBS` category with `privileged = true`, so — per the privilege model — they can only ever be granted inside the **coordination club** (the "clubs responsible" concept). `ADMIN` bypasses all checks.
 
 ### List All Clubs
 
 **GET** `/api/clubs`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Bearer token (any authenticated user)
 
 **Response:** `200 OK`
 
 ```json
-{
-  "clubs": [
-    {
-      "clubName": "string",
-      "description": "string",
-      "profilePicture": {
-        "url": "string"
-      },
-      "memberCount": 25
-    }
-  ]
-}
+[
+  {
+    "clubId": 1,
+    "clubName": "coordination",
+    "clubFullName": "School Coordination",
+    "description": "Clubs coordination hub",
+    "isCoordinationClub": true,
+    "profilePictureUrl": null,
+    "memberCount": 3
+  },
+  {
+    "clubId": 2,
+    "clubName": "chess-club",
+    "clubFullName": "Chess Lovers",
+    "description": "Weekly chess meetings",
+    "isCoordinationClub": false,
+    "profilePictureUrl": "https://s3.../clubs/2/picture",
+    "memberCount": 25
+  }
+]
 ```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
 
 ---
 
@@ -320,21 +493,76 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **GET** `/api/clubs/{clubName}`
 
-**Authorization:** Public, GUEST, USER, STUDENT, CLUB_PRESIDENT, CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** Bearer token (any authenticated user)
+
+Returns full club info. `staff` contains only the leadership (`CLUB_PRESIDENT` + `ASSISTANT_MEMBER` roles), while `memberCount` covers all members.
 
 **Response:** `200 OK`
 
 ```json
 {
-  "clubName": "string",
-  "description": "string",
-  "profilePicture": {
-    "url": "string"
-  },
-  "staff": [Member], // See Type Definitions
-  "memberCount": 25
+  "clubId": 2,
+  "clubName": "chess-club",
+  "clubFullName": "Chess Lovers",
+  "description": "Weekly chess meetings",
+  "isCoordinationClub": false,
+  "profilePictureUrl": "https://s3.../clubs/2/picture",
+  "memberCount": 25,
+  "staff": [
+    {
+      "username": "alice",
+      "firstName": "Alice",
+      "lastName": "Smith",
+      "profilePictureUrl": "https://s3.../users/alice/picture",
+      "role": "CLUB_PRESIDENT"
+    },
+    {
+      "username": "bob",
+      "firstName": "Bob",
+      "lastName": "Jones",
+      "profilePictureUrl": null,
+      "role": "ASSISTANT_MEMBER"
+    }
+  ]
 }
 ```
+
+**Response Codes:**
+
+- `200 OK` — club found
+- `401 Unauthorized` — missing/invalid token
+- `404 Not Found` — no club with that name
+
+---
+
+### Create Coordination Club
+
+**POST** `/api/clubs/coordination`
+
+**Authorization:** `ADMIN` only (`hasRole('ADMIN')`) — not a grantable endpoint
+
+Bootstraps the single coordination club (`isCoordinationClub = true`). This is a one-time setup call; it fails with `409` if the coordination club already exists. Like **Create Club**, it may assign an optional first president via `presidentUsername` — useful since only `ADMIN` can change the coordination president later.
+
+**Request Body:** (`ClubRequest`)
+
+```json
+{
+  "clubName": "coordination",
+  "clubFullName": "School Coordination",
+  "description": "Clubs coordination hub"
+}
+```
+
+**Response:** `201 Created` (a `ClubResponse` body)
+
+**Response Codes:**
+
+- `201 Created` — coordination club created
+- `400 Bad Request` — validation failed (blank/oversized fields)
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller is not an `ADMIN`
+- `404 Not Found` — `presidentUsername` does not match any user
+- `409 Conflict` — coordination club already exists, or another club already uses the name
 
 ---
 
@@ -342,20 +570,82 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **POST** `/api/clubs`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** `ADMIN` or `create_club` grantable endpoint (privileged)
 
-**Request Body:**
+Creates a regular club. If `presidentUsername` is provided, that user must exist and becomes the club's first member with the `CLUB_PRESIDENT` role.
+
+**Request Body:** (`ClubRequest`)
 
 ```json
 {
-  "clubName": "string",
-  "clubFullName": "string",
-  "description": "string",
-  "presidentUsername": "string" // optional
+  "clubName": "chess-club",
+  "clubFullName": "Chess Lovers",
+  "description": "Weekly chess meetings",
+  "presidentUsername": "alice"
 }
 ```
 
-**Response:** `201 Created`
+**Response:** `201 Created` (a `ClubResponse` body)
+
+**Response Codes:**
+
+- `201 Created` — club created
+- `400 Bad Request` — validation failed (blank/oversized fields)
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `create_club` privileged endpoint
+- `404 Not Found` — `presidentUsername` does not match any user
+- `409 Conflict` — a club with the same `clubName` already exists
+
+---
+
+### Update Club
+
+**PUT** `/api/clubs/{clubId}`
+
+**Authorization:** `ADMIN` or `update_club` grantable endpoint (privileged)
+
+Updates the club's name, full name and description. The coordination club can be updated like any other club, but its name must stay unique.
+
+**Request Body:** (`ClubRequest`; `presidentUsername` ignored here)
+
+```json
+{
+  "clubName": "chess-club-new",
+  "clubFullName": "Chess Lovers Renamed",
+  "description": "New description"
+}
+```
+
+**Response:** `200 OK` (the updated `ClubResponse`)
+
+**Response Codes:**
+
+- `200 OK` — club updated
+- `400 Bad Request` — validation failed
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `update_club` privileged endpoint
+- `404 Not Found` — club not found
+- `409 Conflict` — another club already uses the new `clubName`
+
+---
+
+### Delete Club
+
+**DELETE** `/api/clubs/{clubId}`
+
+**Authorization:** `ADMIN` or `delete_club` grantable endpoint (privileged)
+
+Hard-deletes the club. All dependent rows (memberships, join requests, posts, events, profiles, membership history) are removed by database-level `ON DELETE CASCADE` constraints. **The coordination club cannot be deleted** (`409`).
+
+**Response:** `204 No Content`
+
+**Response Codes:**
+
+- `204 No Content` — club deleted
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `delete_club` privileged endpoint
+- `404 Not Found` — club not found
+- `409 Conflict` — the target is the coordination club
 
 ---
 
@@ -363,17 +653,33 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 **PUT** `/api/clubs/{clubId}/president`
 
-**Authorization:** CLUBS_RESPONSIBLE, ADMIN
+**Authorization:** `ADMIN` or `change_club_president` grantable endpoint (privileged)
 
-**Request Body:**
+Hands the presidency to any user:
+
+- The target user does **not** need to be a member already — if they aren't, a new membership with the `CLUB_PRESIDENT` role is created for them.
+- If the target is already president of this club **or of any other club** → `409`.
+- Targeting the **coordination club** requires `ADMIN` (`403` for anyone else) — only the realm ADMIN can swap the person who controls all privileged endpoint grants.
+- The outgoing president is demoted to `MEMBER`. Nothing is written to the membership-history table.
+
+**Request Body:** (`PresidentRequest`)
 
 ```json
 {
-  "presidentUsername": "string"
+  "presidentUsername": "bob"
 }
 ```
 
-**Response:** `200 OK`
+**Response:** `200 OK` (empty body)
+
+**Response Codes:**
+
+- `200 OK` — president changed
+- `400 Bad Request` — blank `presidentUsername`
+- `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `change_club_president` privileged endpoint
+- `404 Not Found` — club not found, or no user with that username
+- `409 Conflict` — the user is already the president of this club or of another club
 
 ---
 
@@ -545,9 +851,11 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 
 ### Get My Club Memberships
 
-**GET** `/api/students/me/clubs`
+**GET** `/api/users/me/clubs`
 
-**Authorization:** STUDENT, CLUB_PRESIDENT
+**Authorization:** Bearer token (own memberships only)
+
+Returns every club the authenticated user currently belongs to, ordered by club name. The `profilePictureUrl` is a presigned S3 `GET` URL (expires after 15 minutes).
 
 **Response:** `200 OK`
 
@@ -555,18 +863,26 @@ Called by Keycloak when a new user completes registration. Creates or syncs the 
 {
   "memberships": [
     {
+      "membershipId": 5,
       "clubName": "string",
       "clubFullName": "string",
-      "description": "string",
-      "profilePicture": {
-        "url": "string"
-      },
-      "clubRole": ClubRole,
-      "joinedDate": "string" // ISO 8601 date
+      "description": "string | null",
+      "isCoordinationClub": false,
+      "profilePictureUrl": "string | null",
+      "clubRole": "MEMBER",
+      "joinedDate": "2026-10-01T12:00:00.000+00:00"
     }
   ]
 }
 ```
+
+`joinedDate` is the membership's `started_at`. A user with no memberships gets `200 OK` with an empty `memberships` array.
+
+**Response Codes:**
+
+- `200 OK` — memberships returned (possibly empty)
+- `401 Unauthorized` — missing/invalid token
+- `404 Not Found` — no local user exists for the token's `sub`
 
 ---
 
@@ -1374,15 +1690,15 @@ Must be called after the new file has been successfully PUT to S3. The backend v
 
 ## Endpoint Registry
 
-The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@GrantableEndpoint` annotation. This section exposes that registry.
+The privilege system is driven by a dynamic registry of grantable API endpoints. Each endpoint that can be assigned to club members is registered at startup via the `@Grantable` annotation. This section exposes that registry.
 
-### List All Grantable Endpoints
+### List Grantable Endpoints
 
-**GET** `/api/endpoints`
+**GET** `/api/grantable-endpoints`
 
-**Authorization:** Bearer token
+**Authorization:** Bearer token (any authenticated user)
 
-Returns all grantable endpoints. Admins and coordination-club presidents see the full list including privileged endpoints (`MANAGE_CLUBS`). Regular members see only non-privileged endpoints.
+Returns all **non-privileged** grantable endpoints.
 
 **Response:** `200 OK`
 
@@ -1399,11 +1715,61 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
     "description": "Assign a profile or individual privileges to a member",
     "category": "MANAGE_MEMBERS",
     "privileged": false
+  }
+]
+```
+
+**Response Codes:**
+
+- `200 OK` — list returned
+- `401 Unauthorized` — missing/invalid token
+
+### List Privileged Grantable Endpoints
+
+**GET** `/api/grantable-endpoints/privileged`
+
+**Authorization:** `ADMIN` or the `view_privileged_endpoints` grantable endpoint (privileged — coordination club only)
+
+Returns the **privileged** grantable endpoints (`privileged: true`).
+
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "name": "create_club",
+    "description": "Create a new club",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
   },
   {
-    "name": "manage_club_settings",
-    "description": "Manage club settings and coordination club status",
+    "name": "update_club",
+    "description": "Update a club's information",
     "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "delete_club",
+    "description": "Delete a club",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "change_club_president",
+    "description": "Change the president of a club",
+    "category": "MANAGE_CLUBS",
+    "privileged": true
+  },
+  {
+    "name": "change_user_role",
+    "description": "Change a user's role between USER and STUDENT",
+    "category": "MANAGE_USERS",
+    "privileged": true
+  },
+  {
+    "name": "view_privileged_endpoints",
+    "description": "View privileged grantable endpoints in the registry",
+    "category": "VIEW_ENDPOINTS",
     "privileged": true
   }
 ]
@@ -1413,6 +1779,7 @@ Returns all grantable endpoints. Admins and coordination-club presidents see the
 
 - `200 OK` — list returned
 - `401 Unauthorized` — missing/invalid token
+- `403 Forbidden` — caller holds neither `ADMIN` nor the `view_privileged_endpoints` privileged endpoint
 
 ---
 
@@ -1713,15 +2080,23 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
 
 ## Error Response Format
 
+All error responses share a flat shape produced by the global exception handler:
+
 ```json
 {
-  "error": {
-    "code": "string",
-    "message": "string",
-    "details": {} // optional
-  }
+  "code": "CONFLICT",
+  "message": "Club name already taken: chess-club"
 }
 ```
+
+| `code` | HTTP status | Triggered by |
+|--------|-------------|--------------|
+| `NOT_FOUND` | 404 | `NotFoundException`, JPA `EntityNotFoundException` |
+| `CONFLICT` | 409 | `ConflictException` (duplicate name, protected coordination club, ...) |
+| `FORBIDDEN` | 403 | Spring Security `AccessDeniedException` |
+| `UNAUTHORIZED` | 401 | `UnauthorizedException`, or a missing/invalid access token (Spring Security entry point) |
+| `BAD_REQUEST` | 400 | `ApplicationException`, bean-validation failures, malformed JSON, bad path/param types |
+| `INTERNAL_ERROR` | 500 | anything unexpected (message is generic) |
 
 ---
 
@@ -1736,4 +2111,5 @@ Returns all privileges currently held by a member, grouped by endpoint, includin
 5. **Assistant Privileges**: Customizable per club
 6. **Public Endpoints**: Also accessible at `/api/public/*` routes (e.g., `/api/public/posts`)
 7. **File Uploads**: All file uploads use a presigned S3 URL flow — request a PUT URL via `/api/storage/upload/*`, upload directly to S3, then confirm via `POST /api/storage/verify`. See the **Storage Endpoints** section for full details.
-8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**.
+8. **Presigned URL Expiry**: PUT upload URLs expire after **5 minutes**; GET download URLs expire after **15 minutes**. This applies to every `profilePictureUrl` returned by the club CRUD endpoints.
+9. **Coordination Club Bootstrap**: The coordination club is created exactly once by an `ADMIN` via `POST /api/clubs/coordination`. It can be renamed/described like any other club but is never deletable, and it is the only club where privileged (`MANAGE_CLUBS`, `VIEW_ENDPOINTS`) endpoints can be granted. Only `ADMIN` can change its president.
