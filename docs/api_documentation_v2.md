@@ -305,6 +305,8 @@ Roles are local database state. `ClubAccessService` resolves the current user by
 | `JWT_SECRET` | HMAC key, at least 32 bytes |
 | `JWT_ACCESS_TTL` | ISO-8601 lifetime, default `PT1H` |
 | `JWT_REFRESH_TTL` | ISO-8601 refresh-token lifetime, default `P30D` |
+| `JWT_ISSUER` | Access-token `iss` claim, default `club-management-system` |
+| `JWT_AUDIENCE` | Access-token `aud` claim, default `club-management-system-api` |
 
 Provider console redirect URIs:
 
@@ -408,7 +410,7 @@ Switches a user's local role between `USER` and `STUDENT` (idempotent: no-op if 
 }
 ```
 
-`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` is assigned by an administrator.
+`role` must be `USER` or `STUDENT` (case-insensitive). `ADMIN` is only granted during bootstrapping through `BOOTSTRAP_ADMIN_EMAILS` on the user's first sign-in.
 
 **Behavior:**
 
@@ -1760,7 +1762,7 @@ Returns the **privileged** grantable endpoints (`privileged: true`).
   },
   {
     "name": "change_user_role",
-    "description": "Change a user's realm role between USER and STUDENT",
+    "description": "Change a user's role between USER and STUDENT",
     "category": "MANAGE_USERS",
     "privileged": true
   },
@@ -2092,6 +2094,7 @@ All error responses share a flat shape produced by the global exception handler:
 | `NOT_FOUND` | 404 | `NotFoundException`, JPA `EntityNotFoundException` |
 | `CONFLICT` | 409 | `ConflictException` (duplicate name, protected coordination club, ...) |
 | `FORBIDDEN` | 403 | Spring Security `AccessDeniedException` |
+| `UNAUTHORIZED` | 401 | `UnauthorizedException`, or a missing/invalid access token (Spring Security entry point) |
 | `BAD_REQUEST` | 400 | `ApplicationException`, bean-validation failures, malformed JSON, bad path/param types |
 | `INTERNAL_ERROR` | 500 | anything unexpected (message is generic) |
 
