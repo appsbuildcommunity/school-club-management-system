@@ -13,13 +13,11 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-@Slf4j
 @Service
 public class OAuthAccountService {
 
@@ -95,7 +93,6 @@ public class OAuthAccountService {
             .createdAt(new Date())
             .build();
     oauthAccountRepository.save(account);
-    log.info("Provisioned user {} via {}", user.getUserId(), provider);
     return user;
   }
 

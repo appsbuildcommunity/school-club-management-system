@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -26,7 +25,6 @@ import org.springframework.web.util.UriComponentsBuilder;
  * <p>The tokens are placed in the URL fragment so they are not sent to any server or included in
  * the Referer header. A production web client should exchange a short-lived one-time code instead.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -65,10 +63,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
               .toUriString();
       response.sendRedirect(target);
     } catch (ApplicationException ex) {
-      log.warn("OAuth2 sign-in rejected: {}", ex.getMessage());
       redirectError(response, "account_error", ex.getMessage());
     } catch (Exception ex) {
-      log.error("OAuth2 sign-in failed", ex);
       redirectError(response, "sign_in_failed", "Sign-in could not be completed.");
     }
   }

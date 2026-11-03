@@ -14,7 +14,6 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +26,6 @@ import org.springframework.util.StringUtils;
  * refresh token can only be used once. Reuse of an already-revoked token revokes every active
  * token for that user.
  */
-@Slf4j
 @Service
 public class RefreshTokenService {
 
@@ -57,7 +55,6 @@ public class RefreshTokenService {
             .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
     if (token.getRevokedAt() != null) {
-      log.warn("Refresh token reuse detected for user {}", token.getUser().getUserId());
       revokeAllActiveFor(token.getUser().getUserId(), now);
       throw new UnauthorizedException("Refresh token has already been used");
     }

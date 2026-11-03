@@ -4,7 +4,6 @@ import com.appsBuild.club_management_system.security.OAuth2AuthenticationFailure
 import com.appsBuild.club_management_system.security.OAuth2AuthenticationSuccessHandler;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +24,6 @@ import org.springframework.util.StringUtils;
  * sign-in UI is owned by the frontend; this chain only handles the provider handshake and the
  * back-end callback before redirecting to the configured frontend URL.
  */
-@Slf4j
 @Configuration
 public class OAuth2LoginConfig {
 
@@ -66,10 +64,6 @@ public class OAuth2LoginConfig {
     }
     if (StringUtils.hasText(facebookClientId) && StringUtils.hasText(facebookClientSecret)) {
       registrations.put("facebook", facebookRegistration());
-    }
-    if (registrations.isEmpty()) {
-      log.warn(
-          "No OAuth2 providers are configured. Set GOOGLE_CLIENT_ID/SECRET or FACEBOOK_CLIENT_ID/SECRET.");
     }
     return registrations::get;
   }
