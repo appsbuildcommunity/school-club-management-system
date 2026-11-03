@@ -281,7 +281,7 @@ Roles are local database state. `ClubAccessService` resolves the current user by
 
 - **Reuse detection:** if a refresh token that has already been revoked is used, the back end revokes every active refresh token for that user and returns `401 Unauthorized` with `code` `UNAUTHORIZED`. This helps contain token theft.
 
-- `/api/auth/refresh` and `/api/auth/logout` remain public; `/verify` and `/api/auth/providers` remain public.
+- `/api/auth/refresh` and `/api/auth/logout` remain public;`/api/auth/providers` remain public.
 
 ### Local account rules
 
@@ -318,7 +318,7 @@ Provider console redirect URIs:
 - No sign-in pages are served by the back end. The frontend owns the sign-in UI and callback route.
 - Point `APP_AUTH_REDIRECT_URI` at the frontend callback (default `http://localhost:5173/auth/callback`).
 - The OAuth2 login chain and JWT resource server are always enabled; no Spring profile is required.
-- `/verify`, `/api/auth/providers`, `/api/auth/refresh`, and `/api/auth/logout` remain public.
+- `/api/auth/providers`, `/api/auth/refresh`, and `/api/auth/logout` remain public.
 
 See `docs/oauth_setup.md` for provider console steps.
 

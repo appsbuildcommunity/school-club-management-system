@@ -23,8 +23,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 /**
  * Stateless Bearer-token security.
  *
- * <p>The OAuth2 login chain is ordered before this one and only matches the sign-in endpoints.
- * All other requests must carry a locally issued JWT.
+ * <p>The OAuth2 login chain is ordered before this one and only matches the sign-in endpoints. All
+ * other requests must carry a locally issued JWT.
  */
 @Configuration
 @EnableMethodSecurity
@@ -41,11 +41,7 @@ public class ApiSecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
-                        "/verify",
-                        "/error",
-                        "/api/auth/providers",
-                        "/api/auth/refresh",
-                        "/api/auth/logout")
+                        "/error", "/api/auth/providers", "/api/auth/refresh", "/api/auth/logout")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
