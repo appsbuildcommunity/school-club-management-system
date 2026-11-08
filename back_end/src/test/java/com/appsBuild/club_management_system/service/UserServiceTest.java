@@ -7,6 +7,7 @@ import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubResponse;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
+import com.appsBuild.club_management_system.dto.user.UserProfileResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
 import com.appsBuild.club_management_system.exception.ApplicationException;
 import com.appsBuild.club_management_system.exception.impl.ConflictException;
@@ -88,6 +89,29 @@ class UserServiceTest {
     assertEquals("https://s3.example.com/key.png", result.profilePictureUrl());
     assertEquals(List.of("STUDENT"), result.roles());
     verify(storage).presignGetUrl("key.png");
+  }
+
+  @Test
+  void getUserProfile_returnsMappedProfile() {
+    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+    UserProfileResponse result = userService.getUserProfile(1L);
+
+    assertEquals(1L, result.userId());
+    assertEquals("alice", result.username());
+    assertEquals("alice@example.com", result.email());
+    assertEquals("Alice", result.firstName());
+    assertEquals("Doe", result.lastName());
+    assertNull(result.profilePictureUrl());
+    assertEquals(List.of("USER"), result.roles());
+    verifyNoInteractions(storage);
+  }
+
+  @Test
+  void getUserProfile_missingUser_throwsNotFound() {
+    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(NotFoundException.class, () -> userService.getUserProfile(99L));
   }
 
   @Test

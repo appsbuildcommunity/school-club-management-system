@@ -4,6 +4,7 @@ import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubResponse;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
+import com.appsBuild.club_management_system.dto.user.UserProfileResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
 import com.appsBuild.club_management_system.exception.ApplicationException;
 import com.appsBuild.club_management_system.exception.impl.ConflictException;
@@ -40,6 +41,14 @@ public class UserService {
   @Transactional(readOnly = true)
   public UserResponse getCurrentUser() {
     return toUserResponse(clubAccessService.currentUser());
+  }
+
+  public UserProfileResponse getUserProfile(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    return toUserProfileResponse(user);
   }
 
   @Transactional
@@ -107,6 +116,17 @@ public class UserService {
         profilePictureUrl(user),
         List.of(user.getRole()),
         user.isOnboardingCompleted());
+  }
+
+  private UserProfileResponse toUserProfileResponse(User user) {
+    return new UserProfileResponse(
+        user.getUserId(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getFirstName(),
+        user.getLastName(),
+        profilePictureUrl(user),
+        List.of(user.getRole()));
   }
 
   private String normalizeUsername(String rawUsername) {

@@ -10,7 +10,9 @@ import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UpdateRoleRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubResponse;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
+import com.appsBuild.club_management_system.dto.user.UserProfileResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
+import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.enums.ClubRole;
 import com.appsBuild.club_management_system.service.ClubAccessService;
 import com.appsBuild.club_management_system.service.UserService;
@@ -85,6 +87,34 @@ class UserControllerTest {
         .andExpect(jsonPath("$.profilePictureUrl").doesNotExist())
         .andExpect(jsonPath("$.roles[0]").value("USER"))
         .andExpect(jsonPath("$.onboardingCompleted").value(false));
+  }
+
+  // ── getUserProfile ──────────────────────────────────────────────────
+
+  @Test
+  void getUserProfile_returns200() throws Exception {
+    when(userService.getUserProfile(5L))
+        .thenReturn(
+            new UserProfileResponse(
+                5L, "bob", "bob@example.com", "Bob", "Smith", null, List.of("STUDENT")));
+
+    mockMvc
+        .perform(get("/api/users/5"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.userId").value(5))
+        .andExpect(jsonPath("$.username").value("bob"))
+        .andExpect(jsonPath("$.email").value("bob@example.com"))
+        .andExpect(jsonPath("$.roles[0]").value("STUDENT"))
+        .andExpect(jsonPath("$.onboardingCompleted").doesNotExist());
+
+    verify(userService).getUserProfile(5L);
+  }
+
+  @Test
+  void getUserProfile_notFound_returns404() throws Exception {
+    when(userService.getUserProfile(99L)).thenThrow(new NotFoundException("User not found: 99"));
+
+    mockMvc.perform(get("/api/users/99")).andExpect(status().isNotFound());
   }
 
   // ── updateCurrentUser ───────────────────────────────────────────────

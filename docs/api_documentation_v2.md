@@ -347,6 +347,37 @@ Returns the local profile of the authenticated user (looked up by the token's `s
 
 ---
 
+### Get User Profile
+
+**GET** `/api/users/{userId}`
+
+**Authorization:** Bearer token
+
+Returns the local profile of the user with the given `userId`.
+
+**Response:** `200 OK`
+
+```json
+{
+  "userId": 1,
+  "username": "string",
+  "email": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "profilePictureUrl": "string | null",
+  "roles": ["USER"]
+}
+```
+
+**Errors:**
+
+- `401 UNAUTHORIZED`: missing or expired access token
+- `404 NOT_FOUND`: no user with that `userId`
+
+Onboarding state is only exposed by `GET /api/users/me`; this endpoint does not return `onboardingCompleted`.
+
+---
+
 ### Update Current User Profile
 
 **PATCH** `/api/users/me`

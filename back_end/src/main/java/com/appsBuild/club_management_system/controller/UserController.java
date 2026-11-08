@@ -5,6 +5,7 @@ import com.appsBuild.club_management_system.dto.s3.S3UploadResponse;
 import com.appsBuild.club_management_system.dto.user.UpdateProfileRequest;
 import com.appsBuild.club_management_system.dto.user.UpdateRoleRequest;
 import com.appsBuild.club_management_system.dto.user.UserClubsResponse;
+import com.appsBuild.club_management_system.dto.user.UserProfileResponse;
 import com.appsBuild.club_management_system.dto.user.UserResponse;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.service.UserService;
@@ -30,6 +31,11 @@ public class UserController {
   @GetMapping("/me")
   public ResponseEntity<UserResponse> getCurrentUser() {
     return ResponseEntity.ok(userService.getCurrentUser());
+  }
+
+  @GetMapping("/{userId}")
+  public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long userId) {
+    return ResponseEntity.ok(userService.getUserProfile(userId));
   }
 
   @PatchMapping("/me")
