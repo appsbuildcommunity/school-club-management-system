@@ -35,7 +35,7 @@ public class ClubMembershipEndpoint {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "endpoint_id", nullable = false)
-  private Endpoint endpoint;
+  private GrantableEndpoint endpoint;
 
   @Column(name = "granted_date", nullable = false)
   private Date grantedDate;

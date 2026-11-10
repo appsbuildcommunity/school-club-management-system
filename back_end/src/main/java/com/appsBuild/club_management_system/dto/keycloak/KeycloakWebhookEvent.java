@@ -1,15 +1,18 @@
 package com.appsBuild.club_management_system.dto.keycloak;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record KeycloakWebhookEvent(
-    String type,
-    @JsonProperty("userId") String userId,
-    @JsonProperty("details") Details details) {
+    @NotBlank String type,
+    @JsonProperty("userId") @NotBlank String userId,
+    @JsonProperty("details") @NotNull @Valid Details details) {
 
   public record Details(
-      String username,
-      String email,
-      @JsonProperty("first_name") String firstName,
-      @JsonProperty("last_name") String lastName) {}
+      @JsonProperty("username") @NotBlank String username,
+      @JsonProperty("email") @NotBlank String email,
+      @JsonProperty("first_name") @NotBlank String firstName,
+      @JsonProperty("last_name") @NotBlank String lastName) {}
 }
