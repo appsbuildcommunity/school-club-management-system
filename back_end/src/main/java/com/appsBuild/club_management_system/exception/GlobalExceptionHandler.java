@@ -2,6 +2,7 @@ package com.appsBuild.club_management_system.exception;
 
 import com.appsBuild.club_management_system.exception.impl.ConflictException;
 import com.appsBuild.club_management_system.exception.impl.NotFoundException;
+import com.appsBuild.club_management_system.exception.impl.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ConflictException.class)
   public ResponseEntity<ErrorBody> handleConflict(ConflictException ex) {
     return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
+  }
+
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<ErrorBody> handleUnauthorized(UnauthorizedException ex) {
+    return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
   }
 
   @ExceptionHandler(ApplicationException.class)

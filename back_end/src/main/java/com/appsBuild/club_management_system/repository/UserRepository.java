@@ -13,8 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     // Finds a user by their unique email, if one exists.
     Optional<User> findByEmail(String email);
-    // Finds a user by their Keycloak subject ID (sub claim) from the JWT, if one exists.
-    Optional<User> findByKeycloakSub(String keycloakSub);
+    // Finds a user by email ignoring case, used during social sign-in.
+    Optional<User> findByEmailIgnoreCase(String email);
     // Finds the profile picture belonging to the given user, if one exists.
     Optional<ProfilePicture> findProfilePictureByUserId(Long userId);
 }

@@ -8,13 +8,13 @@ CREATE TABLE users
     last_name          VARCHAR(50)  NOT NULL,
     username           VARCHAR(50)  NOT NULL,
     email              VARCHAR(100) NOT NULL,
-    keycloak_sub       VARCHAR(100) NOT NULL,
+    role               VARCHAR(20)  NOT NULL DEFAULT 'USER',
     created_at         TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     profile_picture_id BIGINT ,
 
     CONSTRAINT uq_users_username UNIQUE (username),
     CONSTRAINT uq_users_email UNIQUE (email),
-    CONSTRAINT uq_users_keycloak_sub UNIQUE (keycloak_sub),
+    CONSTRAINT ck_users_role CHECK (role IN ('USER', 'STUDENT', 'ADMIN')),
     CONSTRAINT fk_profile_picture_user FOREIGN KEY (profile_picture_id) REFERENCES profile_picture (profile_picture_id)
 );
 
