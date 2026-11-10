@@ -1,0 +1,13 @@
+# Gitleaks configuration: the default rules, plus allowlists for known non-secrets.
+# Only add an entry here after checking that the value is not a real credential.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret files"
+paths = [
+  # binary docs and diagrams
+  '''docs/.*\.(png|pdf)$''',
+  # env.example only holds <placeholder> values
+  '''back_end/env\.example$''',
+]
