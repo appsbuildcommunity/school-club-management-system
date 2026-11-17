@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,6 +86,9 @@ public class UserService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    if ("ADMIN".equals(user.getRole()) && !clubAccessService.isAdmin()) {
+      throw new AccessDeniedException("Only an admin can change an admin's role");
+    }
     user.setRole(normalizedRole);
     userRepository.save(user);
   }

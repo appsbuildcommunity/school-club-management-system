@@ -294,4 +294,41 @@ class UserServiceTest {
     assertTrue(result.memberships().isEmpty());
     verifyNoInteractions(storage);
   }
+
+  @Test
+  void updateRole_adminTarget_byNonAdmin_isDenied() {
+    user.setRole("ADMIN");
+    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    when(clubAccessService.isAdmin()).thenReturn(false);
+
+    assertThrows(
+        org.springframework.security.access.AccessDeniedException.class,
+        () -> userService.updateRole(1L, "USER"));
+
+    verify(userRepository, never()).save(any());
+    assertEquals("ADMIN", user.getRole());
+  }
+
+  @Test
+  void updateRole_adminTarget_byAdmin_succeeds() {
+    user.setRole("ADMIN");
+    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    when(clubAccessService.isAdmin()).thenReturn(true);
+
+    userService.updateRole(1L, "STUDENT");
+
+    assertEquals("STUDENT", user.getRole());
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  void updateRole_userTarget_doesNotCheckAdmin() {
+    user.setRole("USER");
+    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+    userService.updateRole(1L, "STUDENT");
+
+    verify(clubAccessService, never()).isAdmin();
+    verify(userRepository).save(user);
+  }
 }

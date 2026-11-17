@@ -82,7 +82,7 @@ public class OAuthAccountService {
           "An account with this email already exists. Sign in with the provider you used to create it.");
     }
 
-    User user = createUser(email, displayName);
+    User user = createUser(email, displayName, emailVerified);
     OAuthAccount account =
         OAuthAccount.builder()
             .user(user)
@@ -96,7 +96,7 @@ public class OAuthAccountService {
     return user;
   }
 
-  private User createUser(String email, String displayName) {
+  private User createUser(String email, String displayName, boolean emailVerified) {
     String[] names = splitName(displayName, email);
     User user =
         User.builder()
@@ -104,7 +104,7 @@ public class OAuthAccountService {
             .lastName(names[1])
             .username(uniqueUsername(email))
             .email(email)
-            .role(bootstrapAdminEmails.contains(email) ? "ADMIN" : "USER")
+            .role(bootstrapAdminEmails.contains(email) && emailVerified ? "ADMIN" : "USER")
             .createdAt(new Date())
             .build();
     return userRepository.save(user);

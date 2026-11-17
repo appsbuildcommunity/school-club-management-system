@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -73,7 +72,6 @@ public class OAuth2LoginConfig {
   public SecurityFilterChain oauth2LoginSecurityFilterChain(HttpSecurity http) throws Exception {
     http.securityMatcher("/oauth2/**", "/login/**")
         .cors(Customizer.withDefaults())
-        .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
         .oauth2Login(
             oauth2 ->

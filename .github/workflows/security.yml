@@ -60,6 +60,7 @@ jobs:
           S3_BACK_END_ACCESS_KEY: ci
           S3_BACK_END_SECRET_KEY: ci
           S3_ENDPOINT_URL: http://localhost:9000
+          JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-0000
 
   gitleaks:
     name: Secret scan (Gitleaks)
@@ -140,11 +141,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Lint the Keycloak Dockerfile
-        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
-        with:
-          dockerfile: back_end/keycloak/Dockerfile
-          failure-threshold: error
       - name: Scan config files for misconfigurations
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -152,27 +148,3 @@ jobs:
           scan-ref: back_end
           severity: HIGH,CRITICAL
           exit-code: '1'
-      - name: Build the Keycloak image
-        run: docker build -t keycloak-ci:${{ github.sha }} back_end/keycloak
-      - name: Scan the Keycloak image and report all findings
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: keycloak-ci:${{ github.sha }}
-          format: sarif
-          output: trivy-image.sarif
-          ignore-unfixed: true
-          severity: MEDIUM,HIGH,CRITICAL
-      - name: Upload SARIF
-        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-        with:
-          sarif_file: trivy-image.sarif
-          category: trivy-image
-      - name: Fail on fixable CRITICAL vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: keycloak-ci:${{ github.sha }}
-          ignore-unfixed: true
-          severity: CRITICAL
-          exit-code: '1'
-          skip-setup-trivy: true

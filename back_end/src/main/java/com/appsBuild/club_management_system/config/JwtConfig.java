@@ -28,9 +28,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 @Configuration
 public class JwtConfig {
 
-  @Value("${app.jwt.secret}")
-  private String configuredSecret;
-
   @Bean
   public JwtEncoder jwtEncoder(@Value("${app.jwt.secret}") String secret) {
     return new NimbusJwtEncoder(new ImmutableSecret<SecurityContext>(secretKey(secret)));
@@ -64,6 +61,13 @@ public class JwtConfig {
   }
 
   private SecretKey secretKey(String secret) {
+    if (secret == null || secret.trim().isEmpty()) {
+      throw new IllegalStateException("app.jwt.secret is not set; set JWT_SECRET");
+    }
+    if ("dev-only-secret-change-me-0123456789abcdef".equals(secret.trim())) {
+      throw new IllegalStateException(
+          "app.jwt.secret must not use the public placeholder value; set JWT_SECRET");
+    }
     byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
     if (bytes.length < 32) {
       throw new IllegalStateException(

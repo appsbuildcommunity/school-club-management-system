@@ -232,4 +232,28 @@ class OAuthAccountServiceTest {
     assertEquals("", result.getLastName());
     assertFalse(result.getRole().isBlank());
   }
+
+  @Test
+  void signIn_bootstrapAdminEmail_unverified_getsUserRole() {
+    service = new OAuthAccountService(oauthAccountRepository, userRepository, "admin@example.com");
+    when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.FACEBOOK, "fb-admin"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase("admin@example.com")).thenReturn(Optional.empty());
+    when(userRepository.findByUsername("admin")).thenReturn(Optional.empty());
+    when(userRepository.save(any(User.class)))
+        .thenAnswer(
+            invocation -> {
+              User saved = invocation.getArgument(0);
+              saved.setUserId(8L);
+              return saved;
+            });
+    when(oauthAccountRepository.save(any(OAuthAccount.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    User result =
+        service.signIn(
+            OAuthProvider.FACEBOOK, "fb-admin", "admin@example.com", false, "Admin User");
+
+    assertEquals("USER", result.getRole());
+  }
 }
