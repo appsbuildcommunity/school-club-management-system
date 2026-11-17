@@ -10,4 +10,7 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
 
   // Finds the single coordination club (is_coordination_club = true), if one has been created yet.
   Optional<Club> findByCoordinationClubTrue();
+
+  // Finds a club by its unique name, if one exists.
+  Optional<Club> findByClubName(String clubName);
 }

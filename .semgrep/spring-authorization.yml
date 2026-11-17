@@ -1,0 +1,52 @@
+rules:
+  - id: grantable-endpoint-without-preauthorize
+    languages: [java]
+    severity: ERROR
+    message: >-
+      $METHOD is a @GrantableEndpoint but has no @PreAuthorize, so the granted
+      privilege is never checked and any authenticated user can call it. Add
+      @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, '<name>')").
+    metadata:
+      category: security
+      cwe: 'CWE-862: Missing Authorization'
+    patterns:
+      - pattern: |
+          @GrantableEndpoint(...)
+          $RET $METHOD(...) { ... }
+      - pattern-not: |
+          @PreAuthorize(...)
+          $RET $METHOD(...) { ... }
+
+  - id: controller-endpoint-without-preauthorize
+    languages: [java]
+    severity: WARNING
+    message: >-
+      $METHOD is an HTTP endpoint without @PreAuthorize. Check that it is meant
+      to be open to every authenticated user, or protected another way (e.g. the
+      webhook basic auth). If so, add a `// nosemgrep` comment explaining why.
+    metadata:
+      category: security
+      cwe: 'CWE-862: Missing Authorization'
+    patterns:
+      - pattern-inside: |
+          @RestController
+          class $CLASS { ... }
+      - pattern-either:
+          - pattern: |
+              @GetMapping(...)
+              $RET $METHOD(...) { ... }
+          - pattern: |
+              @PostMapping(...)
+              $RET $METHOD(...) { ... }
+          - pattern: |
+              @PutMapping(...)
+              $RET $METHOD(...) { ... }
+          - pattern: |
+              @PatchMapping(...)
+              $RET $METHOD(...) { ... }
+          - pattern: |
+              @DeleteMapping(...)
+              $RET $METHOD(...) { ... }
+      - pattern-not: |
+          @PreAuthorize(...)
+          $RET $METHOD(...) { ... }

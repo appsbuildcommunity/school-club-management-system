@@ -72,6 +72,17 @@ class PrivilegeControllerTest {
         .andExpect(jsonPath("$.name").value("Event Mgr"));
   }
 
+  @Test
+  void createProfile_blankName_returns400() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/clubs/1/profiles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"\",\"endpoints\":[]}"))
+        .andExpect(status().isBadRequest());
+    verify(clubProfileService, never()).createProfile(any(), any());
+  }
+
   // ── updateProfile ───────────────────────────────────────────────────
 
   @Test
@@ -129,6 +140,17 @@ class PrivilegeControllerTest {
                         new AssignPrivilegesRequest(100L, List.of("manage_events")))))
         .andExpect(status().isCreated());
     verify(clubProfileService).assignPrivileges(eq(1L), eq(50L), any(AssignPrivilegesRequest.class));
+  }
+
+  @Test
+  void assignPrivileges_withoutProfileOrEndpoints_returns400() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/clubs/1/members/50/privileges")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new AssignPrivilegesRequest(null, null))))
+        .andExpect(status().isBadRequest());
+    verify(clubProfileService, never()).assignPrivileges(any(), any(), any());
   }
 
   // ── unassignProfile ─────────────────────────────────────────────────

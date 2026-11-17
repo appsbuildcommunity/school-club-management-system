@@ -1,12 +1,13 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
+import com.appsBuild.club_management_system.annotation.Grantable;
 import com.appsBuild.club_management_system.dto.club.AssignPrivilegesRequest;
 import com.appsBuild.club_management_system.dto.club.ClubProfileRequest;
 import com.appsBuild.club_management_system.dto.club.ClubProfileResponse;
 import com.appsBuild.club_management_system.dto.privilege.MemberPrivilegesResponse;
 import com.appsBuild.club_management_system.model.enums.Category;
 import com.appsBuild.club_management_system.service.ClubProfileService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,7 @@ public class PrivilegeController {
   // ── Profile CRUD ────────────────────────────────────────────────────
 
   @PostMapping("/profiles")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_profiles",
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
@@ -32,13 +33,13 @@ public class PrivilegeController {
   @PreAuthorize("hasRole('ADMIN') or @clubAccess.hasEndpoint(#clubId, 'manage_profiles')")
   public ResponseEntity<ClubProfileResponse> createProfile(
       @PathVariable Long clubId,
-      @RequestBody ClubProfileRequest request) {
+      @Valid @RequestBody ClubProfileRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(clubProfileService.createProfile(clubId, request));
   }
 
   @PutMapping("/profiles/{profileId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_profiles",
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
@@ -47,12 +48,12 @@ public class PrivilegeController {
   public ResponseEntity<ClubProfileResponse> updateProfile(
       @PathVariable Long clubId,
       @PathVariable Long profileId,
-      @RequestBody ClubProfileRequest request) {
+      @Valid @RequestBody ClubProfileRequest request) {
     return ResponseEntity.ok(clubProfileService.updateProfile(clubId, profileId, request));
   }
 
   @DeleteMapping("/profiles/{profileId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_profiles",
       description = "Manage role profiles for a club",
       category = Category.MANAGE_MEMBERS,
@@ -75,7 +76,7 @@ public class PrivilegeController {
   // ── Assignment (two branches) ───────────────────────────────────────
 
   @PostMapping("/members/{membershipId}/privileges")
-  @GrantableEndpoint(
+  @Grantable(
       name = "assign_profile",
       description = "Assign a profile or individual privileges to a member",
       category = Category.MANAGE_MEMBERS,
@@ -84,7 +85,7 @@ public class PrivilegeController {
   public ResponseEntity<Void> assignPrivileges(
       @PathVariable Long clubId,
       @PathVariable Long membershipId,
-      @RequestBody AssignPrivilegesRequest request) {
+      @Valid @RequestBody AssignPrivilegesRequest request) {
     clubProfileService.assignPrivileges(clubId, membershipId, request);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
@@ -92,7 +93,7 @@ public class PrivilegeController {
   // ── Removal ─────────────────────────────────────────────────────────
 
   @DeleteMapping("/members/{membershipId}/profiles/{profileId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "unassign_profile",
       description = "Unassign a profile from a member",
       category = Category.MANAGE_MEMBERS,
@@ -107,7 +108,7 @@ public class PrivilegeController {
   }
 
   @DeleteMapping("/members/{membershipId}/privileges/{endpointName}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "revoke_privilege",
       description = "Revoke an individual privilege from a member",
       category = Category.MANAGE_MEMBERS,

@@ -8,17 +8,19 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "grantable_endpoint")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Endpoint {
+public class GrantableEndpoint {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long endpointId;

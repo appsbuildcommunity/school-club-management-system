@@ -34,20 +34,20 @@ class ClubProfileServiceTest {
   @Mock private ClubProfileRepository clubProfileRepository;
   @Mock private ClubMembershipProfileRepository clubMembershipProfileRepository;
   @Mock private ClubMembershipEndpointRepository clubMembershipEndpointRepository;
-  @Mock private EndpointRepository endpointRepository;
+  @Mock private GrantableEndpointRepository grantableEndpointRepository;
   @Mock private ClubAccessService clubAccessService;
 
   @InjectMocks private ClubProfileService clubProfileService;
 
   private Club club;
-  private Endpoint endpointA;
-  private Endpoint endpointB;
+  private GrantableEndpoint endpointA;
+  private GrantableEndpoint endpointB;
 
   @BeforeEach
   void setUp() {
     club = Club.builder().clubId(1L).clubName("Chess Club").isCoordinationClub(false).build();
     endpointA =
-        Endpoint.builder()
+        GrantableEndpoint.builder()
             .endpointId(10L)
             .name("manage_events")
             .description("Manage events")
@@ -55,7 +55,7 @@ class ClubProfileServiceTest {
             .privileged(false)
             .build();
     endpointB =
-        Endpoint.builder()
+        GrantableEndpoint.builder()
             .endpointId(11L)
             .name("manage_posts")
             .description("Manage posts")
@@ -69,7 +69,7 @@ class ClubProfileServiceTest {
   @Test
   void createProfile_success() {
     when(clubRepository.findById(1L)).thenReturn(Optional.of(club));
-    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
+    when(grantableEndpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
     when(clubProfileRepository.save(any(ClubProfile.class)))
         .thenAnswer(
             inv -> {
@@ -133,7 +133,7 @@ class ClubProfileServiceTest {
             .endpoints(List.of(endpointA))
             .build();
     when(clubProfileRepository.findById(100L)).thenReturn(Optional.of(profile));
-    when(endpointRepository.findByName("manage_posts")).thenReturn(Optional.of(endpointB));
+    when(grantableEndpointRepository.findByName("manage_posts")).thenReturn(Optional.of(endpointB));
 
     ClubProfileResponse resp =
         clubProfileService.updateProfile(
@@ -288,7 +288,7 @@ class ClubProfileServiceTest {
             .clubRole(ClubRole.ASSISTANT_MEMBER)
             .build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
+    when(grantableEndpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
     when(clubMembershipEndpointRepository
             .existsByClubMembership_MembershipIdAndEndpoint_Name(50L, "manage_events"))
         .thenReturn(false);
@@ -311,7 +311,7 @@ class ClubProfileServiceTest {
             .clubRole(ClubRole.ASSISTANT_MEMBER)
             .build();
     when(clubMembershipRepository.findById(50L)).thenReturn(Optional.of(membership));
-    when(endpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
+    when(grantableEndpointRepository.findByName("manage_events")).thenReturn(Optional.of(endpointA));
     when(clubMembershipEndpointRepository
             .existsByClubMembership_MembershipIdAndEndpoint_Name(50L, "manage_events"))
         .thenReturn(true);
