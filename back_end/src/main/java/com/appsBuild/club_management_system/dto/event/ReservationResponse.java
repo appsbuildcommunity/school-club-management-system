@@ -1,13 +1,13 @@
 package com.appsBuild.club_management_system.dto.event;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.appsBuild.club_management_system.dto.common.LocationResponse;
 import com.appsBuild.club_management_system.model.enums.DemandStatus;
 
 public record ReservationResponse(
     Long id,
-    Date startDate,
-    Date endDate,
+    LocalDate startDate,
+    LocalDate endDate,
     DemandStatus status,
     LocationResponse location) {}

@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.dto.event;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.appsBuild.club_management_system.dto.common.AttachmentResponse;
@@ -15,8 +15,8 @@ public record EventResponse(
     String description,
     ClubReference club,
     VisibilityLevel visibility,
-    Date startDate,
-    Date endDate,
+    LocalDate startDate,
+    LocalDate endDate,
     List<LocationResponse> locations,
     List<AttachmentResponse> attachments,
     List<CommentResponse> comments,

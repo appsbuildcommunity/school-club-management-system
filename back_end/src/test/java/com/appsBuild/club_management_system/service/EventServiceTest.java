@@ -3,15 +3,19 @@ package com.appsBuild.club_management_system.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +35,7 @@ import com.appsBuild.club_management_system.dto.event.EventResponse;
 import com.appsBuild.club_management_system.dto.event.ReservationRequest;
 import com.appsBuild.club_management_system.dto.event.ReservationResponse;
 import com.appsBuild.club_management_system.exception.ApplicationException;
+import com.appsBuild.club_management_system.exception.impl.ConflictException;
 import com.appsBuild.club_management_system.exception.impl.NotFoundException;
 import com.appsBuild.club_management_system.model.entity.Club;
 import com.appsBuild.club_management_system.model.entity.Event;
@@ -43,6 +48,8 @@ import com.appsBuild.club_management_system.repository.ClubRepository;
 import com.appsBuild.club_management_system.repository.EventRepository;
 import com.appsBuild.club_management_system.repository.LocationRepository;
 import com.appsBuild.club_management_system.repository.LocationReservationRepository;
+import com.appsBuild.club_management_system.security.ViewerContext;
+import com.appsBuild.club_management_system.security.ViewerContextResolver;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -55,6 +62,8 @@ class EventServiceTest {
 	private LocationRepository locationRepository;
 	@Mock
 	private LocationReservationRepository locationReservationRepository;
+	@Mock
+	private ViewerContextResolver viewerContextResolver;
 
 	@InjectMocks
 	private EventService eventService;
@@ -70,6 +79,9 @@ class EventServiceTest {
 				.label("Main Hall")
 				.type(LocationType.INTERNAL)
 				.build();
+		lenient()
+				.when(viewerContextResolver.resolve())
+				.thenReturn(ViewerContext.anonymous());
 	}
 
 	private EventRequest request() {
@@ -88,8 +100,14 @@ class EventServiceTest {
 				.title("Workshop")
 				.visibility(VisibilityLevel.PUBLIC)
 				.club(club)
+				.startDate(new Date())
+				.endDate(new Date())
 				.locationReservations(new ArrayList<>())
 				.build();
+	}
+
+	private Date date(LocalDate day) {
+		return Date.from(day.atStartOfDay(ZoneOffset.UTC).toInstant());
 	}
 
 	// ── create ──────────────────────────────────────────────────────────
@@ -119,10 +137,12 @@ class EventServiceTest {
 		assertEquals(VisibilityLevel.PUBLIC, response.visibility());
 		assertEquals(1L, response.club().id());
 		assertEquals("Robotics Club", response.club().name());
+		assertEquals(LocalDate.of(2026, 11, 10), response.startDate());
 		assertEquals(1, response.reservations().size());
 
 		ReservationResponse reservation = response.reservations().get(0);
 		assertEquals(DemandStatus.PENDING, reservation.status());
+		assertEquals(LocalDate.of(2026, 11, 10), reservation.startDate());
 		assertEquals(5L, reservation.location().id());
 		assertEquals("Main Hall", reservation.location().name());
 
@@ -161,6 +181,23 @@ class EventServiceTest {
 		assertThrows(NotFoundException.class, () -> eventService.createEvent(1L, request));
 	}
 
+	@Test
+	void createEvent_overlappingReservation_throwsConflict() {
+		when(clubRepository.findById(1L)).thenReturn(Optional.of(club));
+		when(locationReservationRepository.countOverlappingReservations(
+						eq(5L), any(), any(Date.class), any(Date.class), eq(-1L)))
+				.thenReturn(1L);
+
+		EventRequest request = request();
+		request.setReservations(
+				List.of(
+						new ReservationRequest(
+								5L, LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 10))));
+
+		assertThrows(ConflictException.class, () -> eventService.createEvent(1L, request));
+		verify(eventRepository, never()).save(any());
+	}
+
 	// ── read ────────────────────────────────────────────────────────────
 
 	@Test
@@ -168,6 +205,41 @@ class EventServiceTest {
 		when(eventRepository.findById(99L)).thenReturn(Optional.empty());
 
 		assertThrows(NotFoundException.class, () -> eventService.getEvent(99L));
+	}
+
+	@Test
+	void getEvent_membersOnlyEvent_asAnonymous_throwsNotFound() {
+		Event event = event(100L);
+		event.setVisibility(VisibilityLevel.MEMBERS_ONLY);
+		when(eventRepository.findById(100L)).thenReturn(Optional.of(event));
+
+		assertThrows(NotFoundException.class, () -> eventService.getEvent(100L));
+	}
+
+	@Test
+	void getEvent_studentsOnlyEvent_asStudent_returns() {
+		Event event = event(100L);
+		event.setVisibility(VisibilityLevel.STUDENTS_ONLY);
+		when(eventRepository.findById(100L)).thenReturn(Optional.of(event));
+		when(viewerContextResolver.resolve())
+				.thenReturn(new ViewerContext(true, false, true, Set.of()));
+
+		EventResponse response = eventService.getEvent(100L);
+
+		assertEquals(100L, response.eventId());
+	}
+
+	@Test
+	void getEvent_hiddenEvent_asAdmin_returns() {
+		Event event = event(100L);
+		event.setVisibility(VisibilityLevel.HIDDEN);
+		when(eventRepository.findById(100L)).thenReturn(Optional.of(event));
+		when(viewerContextResolver.resolve())
+				.thenReturn(new ViewerContext(true, true, false, Set.of()));
+
+		EventResponse response = eventService.getEvent(100L);
+
+		assertEquals(VisibilityLevel.HIDDEN, response.visibility());
 	}
 
 	@Test
@@ -185,21 +257,30 @@ class EventServiceTest {
 		assertEquals(1, response.pagination().totalItems());
 	}
 
+	@Test
+	void listEvents_startAfterEnd_throws() {
+		assertThrows(
+				ApplicationException.class,
+				() ->
+						eventService.listEvents(
+								1, 20, null, LocalDate.of(2026, 12, 2), LocalDate.of(2026, 12, 1)));
+	}
+
 	// ── update ──────────────────────────────────────────────────────────
 
 	@Test
 	void updateEvent_replacesNonApprovedReservations_keepsApproved() {
 		LocationReservation approved = LocationReservation.builder()
 				.locationReservationId(50L)
-				.startDate(new Date())
-				.endDate(new Date())
+				.startDate(date(LocalDate.of(2026, 10, 1)))
+				.endDate(date(LocalDate.of(2026, 10, 1)))
 				.status(DemandStatus.APPROVED)
 				.location(location)
 				.build();
 		LocationReservation pending = LocationReservation.builder()
 				.locationReservationId(51L)
-				.startDate(new Date())
-				.endDate(new Date())
+				.startDate(date(LocalDate.of(2026, 10, 2)))
+				.endDate(date(LocalDate.of(2026, 10, 2)))
 				.status(DemandStatus.PENDING)
 				.location(location)
 				.build();
@@ -226,6 +307,33 @@ class EventServiceTest {
 		verify(locationReservationRepository).delete(pending);
 		verify(locationReservationRepository, never()).delete(approved);
 		verify(eventRepository).save(event);
+	}
+
+	@Test
+	void updateEvent_requestOverlapsApprovedReservation_isSkipped() {
+		LocalDate day = LocalDate.of(2026, 11, 10);
+		LocationReservation approved = LocationReservation.builder()
+				.locationReservationId(50L)
+				.startDate(date(day))
+				.endDate(date(day))
+				.status(DemandStatus.APPROVED)
+				.location(location)
+				.build();
+		Event event = event(100L);
+		event.setLocationReservations(new ArrayList<>(List.of(approved)));
+		approved.setEvent(event);
+
+		when(eventRepository.findById(100L)).thenReturn(Optional.of(event));
+		when(eventRepository.save(event)).thenReturn(event);
+
+		EventRequest request = request();
+		request.setReservations(
+				List.of(new ReservationRequest(5L, day.minusDays(1), day)));
+
+		EventResponse response = eventService.updateEvent(1L, 100L, request);
+
+		assertEquals(1, response.reservations().size());
+		verify(locationRepository, never()).findById(any());
 	}
 
 	@Test

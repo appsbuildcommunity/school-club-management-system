@@ -1,6 +1,6 @@
 package com.appsBuild.club_management_system.controller;
 
-import com.appsBuild.club_management_system.annotation.GrantableEndpoint;
+import com.appsBuild.club_management_system.annotation.Grantable;
 import com.appsBuild.club_management_system.dto.event.EventPageResponse;
 import com.appsBuild.club_management_system.dto.event.EventRequest;
 import com.appsBuild.club_management_system.dto.event.EventResponse;
@@ -58,7 +58,7 @@ public class EventController {
   // ── Write ───────────────────────────────────────────────────────────
 
   @PostMapping("/clubs/{clubId}/events")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_events",
       description = "Manage events for a club",
       category = Category.MANAGE_EVENTS,
@@ -71,7 +71,7 @@ public class EventController {
   }
 
   @PutMapping("/clubs/{clubId}/events/{eventId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_events",
       description = "Manage events for a club",
       category = Category.MANAGE_EVENTS,
@@ -85,7 +85,7 @@ public class EventController {
   }
 
   @DeleteMapping("/clubs/{clubId}/events/{eventId}")
-  @GrantableEndpoint(
+  @Grantable(
       name = "manage_events",
       description = "Manage events for a club",
       category = Category.MANAGE_EVENTS,
