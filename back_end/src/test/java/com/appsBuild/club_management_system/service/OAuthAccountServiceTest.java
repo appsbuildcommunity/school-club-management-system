@@ -2,11 +2,15 @@ package com.appsBuild.club_management_system.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -18,8 +22,10 @@ import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.model.enums.OAuthProvider;
 import com.appsBuild.club_management_system.repository.OAuthAccountRepository;
 import com.appsBuild.club_management_system.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +44,28 @@ class OAuthAccountServiceTest {
   @BeforeEach
   void setUp() {
     service = new OAuthAccountService(oauthAccountRepository, userRepository, "");
+  }
+
+  private static String expectedHashedUsername(String email) {
+    String base = email.substring(0, email.indexOf('@'));
+    String hash =
+        UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8))
+            .toString()
+            .replace("-", "")
+            .substring(0, 12);
+    return base + "-" + hash;
+  }
+
+  private void stubSaves() {
+    when(userRepository.save(any(User.class)))
+        .thenAnswer(
+            invocation -> {
+              User saved = invocation.getArgument(0);
+              saved.setUserId(7L);
+              return saved;
+            });
+    when(oauthAccountRepository.save(any(OAuthAccount.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
   }
 
   @Test
@@ -75,6 +103,7 @@ class OAuthAccountServiceTest {
     assertEquals("alice@example.com", account.getProviderEmail());
     assertTrue(account.isEmailVerified());
     assertSame(result, account.getUser());
+    verify(userRepository, times(1)).findByUsername(anyString());
   }
 
   @Test
@@ -162,27 +191,103 @@ class OAuthAccountServiceTest {
   }
 
   @Test
-  void signIn_usernameCollision_appendsSuffix() {
+  void signIn_usernameCollision_usesEmailHashSuffix() {
+    String hashed = expectedHashedUsername("alice@example.com");
     when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-sub"))
         .thenReturn(Optional.empty());
     when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.empty());
     when(userRepository.findByUsername("alice"))
         .thenReturn(Optional.of(User.builder().userId(1L).build()));
-    when(userRepository.findByUsername("alice-2")).thenReturn(Optional.empty());
-    when(userRepository.save(any(User.class)))
-        .thenAnswer(
-            invocation -> {
-              User saved = invocation.getArgument(0);
-              saved.setUserId(7L);
-              return saved;
-            });
-    when(oauthAccountRepository.save(any(OAuthAccount.class)))
-        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(userRepository.findByUsername(hashed)).thenReturn(Optional.empty());
+    stubSaves();
 
     User result =
         service.signIn(OAuthProvider.GOOGLE, "google-sub", "alice@example.com", true, "Alice Doe");
 
-    assertEquals("alice-2", result.getUsername());
+    assertEquals(hashed, result.getUsername());
+    verify(userRepository).findByUsername("alice");
+    verify(userRepository).findByUsername(hashed);
+    verify(userRepository, times(2)).findByUsername(anyString());
+  }
+
+  @Test
+  void signIn_hashedUsernameAlsoTaken_fallsBackToRandomSuffixWithBoundedLookups() {
+    String hashed = expectedHashedUsername("alice@example.com");
+    when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-sub"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.empty());
+    when(userRepository.findByUsername("alice"))
+        .thenReturn(Optional.of(User.builder().userId(1L).build()));
+    when(userRepository.findByUsername(hashed))
+        .thenReturn(Optional.of(User.builder().userId(2L).build()));
+    when(userRepository.findByUsername(
+            argThat(
+                name ->
+                    name != null
+                        && name.startsWith("alice-")
+                        && !name.equals(hashed))))
+        .thenReturn(Optional.empty());
+    stubSaves();
+
+    User result =
+        service.signIn(OAuthProvider.GOOGLE, "google-sub", "alice@example.com", true, "Alice Doe");
+
+    assertTrue(result.getUsername().startsWith("alice-"));
+    assertNotEquals(hashed, result.getUsername());
+    assertTrue(result.getUsername().length() <= 50);
+    verify(userRepository, times(3)).findByUsername(anyString());
+  }
+
+  @Test
+  void signIn_allUsernameCandidatesTaken_throwsConflictAfterBoundedLookups() {
+    when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-sub"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.empty());
+    when(userRepository.findByUsername(anyString()))
+        .thenReturn(Optional.of(User.builder().userId(1L).build()));
+
+    ConflictException exception =
+        assertThrows(
+            ConflictException.class,
+            () ->
+                service.signIn(
+                    OAuthProvider.GOOGLE, "google-sub", "alice@example.com", true, "Alice Doe"));
+
+    assertTrue(exception.getMessage().contains("unique username"));
+    verify(userRepository, times(5)).findByUsername(anyString());
+    verify(userRepository, never()).save(any(User.class));
+    verify(oauthAccountRepository, never()).save(any(OAuthAccount.class));
+  }
+
+  @Test
+  void signIn_longEmailLocalPart_keepsUsernameWithinLimit() {
+    String email = "a".repeat(60) + "@example.com";
+    when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-sub"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.empty());
+    when(userRepository.findByUsername("a".repeat(50))).thenReturn(Optional.empty());
+    stubSaves();
+
+    User result = service.signIn(OAuthProvider.GOOGLE, "google-sub", email, true, "Alice Doe");
+
+    assertEquals(50, result.getUsername().length());
+    verify(userRepository).findByUsername("a".repeat(50));
+  }
+
+  @Test
+  void signIn_emailLocalPartWithInvalidCharacters_sanitizesUsername() {
+    when(oauthAccountRepository.findByProviderAndProviderSubject(OAuthProvider.GOOGLE, "google-sub"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase("alice+tag@example.com"))
+        .thenReturn(Optional.empty());
+    when(userRepository.findByUsername("alice-tag")).thenReturn(Optional.empty());
+    stubSaves();
+
+    User result =
+        service.signIn(
+            OAuthProvider.GOOGLE, "google-sub", "alice+tag@example.com", true, "Alice Doe");
+
+    assertEquals("alice-tag", result.getUsername());
   }
 
   @Test

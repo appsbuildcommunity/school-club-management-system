@@ -7,11 +7,13 @@ import com.appsBuild.club_management_system.model.entity.User;
 import com.appsBuild.club_management_system.model.enums.OAuthProvider;
 import com.appsBuild.club_management_system.repository.OAuthAccountRepository;
 import com.appsBuild.club_management_system.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,11 @@ import org.springframework.util.StringUtils;
 
 @Service
 public class OAuthAccountService {
+
+  private static final int USERNAME_MAX_LENGTH = 50;
+  private static final int HASH_SUFFIX_LENGTH = 12;
+  private static final int RANDOM_SUFFIX_LENGTH = 8;
+  private static final int RANDOM_SUFFIX_ATTEMPTS = 3;
 
   private final OAuthAccountRepository oauthAccountRepository;
   private final UserRepository userRepository;
@@ -117,17 +124,40 @@ public class OAuthAccountService {
     if (!StringUtils.hasText(base)) {
       base = "user";
     }
-    if (base.length() > 44) {
-      base = base.substring(0, 44);
+    base = truncate(base, USERNAME_MAX_LENGTH);
+
+    if (userRepository.findByUsername(base).isEmpty()) {
+      return base;
     }
-    String candidate = base;
-    int suffix = 2;
-    while (userRepository.findByUsername(candidate).isPresent()) {
-      String suffixText = "-" + suffix++;
-      int maxBaseLength = 50 - suffixText.length();
-      candidate = base.substring(0, Math.min(base.length(), maxBaseLength)) + suffixText;
+
+    String hashedCandidate = withSuffix(base, "-" + emailHash(email));
+    if (userRepository.findByUsername(hashedCandidate).isEmpty()) {
+      return hashedCandidate;
     }
-    return candidate;
+
+    for (int attempt = 0; attempt < RANDOM_SUFFIX_ATTEMPTS; attempt++) {
+      String candidate = withSuffix(base, "-" + randomHex(RANDOM_SUFFIX_LENGTH));
+      if (userRepository.findByUsername(candidate).isEmpty()) {
+        return candidate;
+      }
+    }
+    throw new ConflictException("Unable to generate a unique username");
+  }
+
+  private String emailHash(String email) {
+    String hex =
+        UUID.nameUUIDFromBytes(email.getBytes(StandardCharsets.UTF_8))
+            .toString()
+            .replace("-", "");
+    return hex.substring(0, HASH_SUFFIX_LENGTH);
+  }
+
+  private String randomHex(int length) {
+    return UUID.randomUUID().toString().replace("-", "").substring(0, length);
+  }
+
+  private String withSuffix(String base, String suffix) {
+    return truncate(base, USERNAME_MAX_LENGTH - suffix.length()) + suffix;
   }
 
   private String[] splitName(String displayName, String email) {
