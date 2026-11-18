@@ -51,3 +51,5 @@ databaseChangeLog:
       file: db/changelog/migrations/026-add-on-delete-cascade-to-club-membership-endpoint.sql
   - include:
       file: db/changelog/migrations/027-rename-endpoint-table-to-grantable-endpoint.sql
+  - include:
+      file: db/changelog/migrations/028-add-hidden-reason-to-post.sql
