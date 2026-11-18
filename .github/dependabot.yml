@@ -23,11 +23,6 @@ updates:
       actions:
         patterns: ['*']
 
-  - package-ecosystem: docker
-    directory: /back_end/keycloak
-    schedule:
-      interval: weekly
-
   - package-ecosystem: docker-compose
     directory: /back_end
     schedule:

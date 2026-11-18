@@ -18,7 +18,6 @@ import com.appsBuild.club_management_system.repository.UserRepository;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,12 +53,15 @@ public class ClubAccessService {
   /** Resolves the application user backing the current JWT, or fails with a 404. */
   public User currentUser() {
     Jwt jwt = getJwt();
+    Long userId;
+    try {
+      userId = Long.valueOf(jwt.getSubject());
+    } catch (NumberFormatException e) {
+      throw new NotFoundException("Invalid user subject: " + jwt.getSubject());
+    }
     return userRepository
-        .findByKeycloakSub(jwt.getSubject())
-        .orElseThrow(
-            () ->
-                new NotFoundException(
-                    "User not found for keycloak subject: " + jwt.getSubject()));
+        .findById(userId)
+        .orElseThrow(() -> new NotFoundException("User not found: " + userId));
   }
 
   /** True if the JWT belongs to the given user id. */
@@ -67,9 +69,14 @@ public class ClubAccessService {
     return currentUser().getUserId().equals(userId);
   }
 
-  /** True if the JWT carries the realm ADMIN role. */
+  /** True if the current user has the ADMIN role. */
   public boolean isAdmin() {
-    return rolesFromJwt(getJwt()).contains(ADMIN_ROLE);
+    return ADMIN_ROLE.equals(currentUser().getRole());
+  }
+
+  /** Roles of the current user. */
+  public List<String> roles() {
+    return List.of(currentUser().getRole());
   }
 
   /** Returns the coordination club's id, or fails with a 404 if it has not been created yet. */
@@ -196,11 +203,4 @@ public class ClubAccessService {
         .orElse(false);
   }
 
-  private List<String> rolesFromJwt(Jwt jwt) {
-    Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
-    if (realmAccess == null || !(realmAccess.get("roles") instanceof List<?> roles)) {
-      return List.of();
-    }
-    return roles.stream().map(String::valueOf).toList();
-  }
 }

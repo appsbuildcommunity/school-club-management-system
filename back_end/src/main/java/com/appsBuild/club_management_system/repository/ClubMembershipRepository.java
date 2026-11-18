@@ -5,6 +5,7 @@ import com.appsBuild.club_management_system.model.enums.ClubRole;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,10 @@ public interface ClubMembershipRepository extends JpaRepository<ClubMembership, 
 
   // Finds the membership a user has in a specific club, if it exists.
   Optional<ClubMembership> findByUser_UserIdAndClub_ClubId(Long userId, Long clubId);
+
+  // Finds all of a user's memberships, ordered by club name.
+  @EntityGraph(attributePaths = {"club", "club.profilePicture"})
+  List<ClubMembership> findByUser_UserIdOrderByClub_ClubNameAsc(Long userId);
 
   // Counts the members of a club.
   long countByClub_ClubId(Long clubId);

@@ -5,5 +5,6 @@ public enum Category {
   MANAGE_EVENTS,
   MANAGE_MEMBERS,
   MANAGE_CLUBS,
+  MANAGE_USERS,
   VIEW_ENDPOINTS;
 }

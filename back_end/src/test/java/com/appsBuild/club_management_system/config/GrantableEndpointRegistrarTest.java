@@ -79,7 +79,6 @@ class GrantableEndpointRegistrarTest {
                 .lastName("Smith")
                 .username("alice")
                 .email("alice@example.com")
-                .keycloakSub("sub-" + System.nanoTime())
                 .createdAt(new Date())
                 .build());
     Club club =
