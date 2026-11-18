@@ -35,6 +35,9 @@ public class Post {
   @Column(name = "visibility", nullable = false, length = 20)
   private VisibilityLevel visibility;
 
+  @Column(name = "hidden_reason", length = 500)
+  private String hiddenReason;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "club_id", nullable = false)
   private Club club;
