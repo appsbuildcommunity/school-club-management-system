@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -25,4 +27,8 @@ public interface ClubMembershipRepository extends JpaRepository<ClubMembership, 
 
   // Checks whether a user holds a specific role in any club.
   boolean existsByUser_UserIdAndClubRole(Long userId, ClubRole role);
+
+  // Returns the ids of all clubs the given user is a member of.
+  @Query("select m.club.clubId from ClubMembership m where m.user.userId = :userId")
+  List<Long> findClubIdsByUserId(@Param("userId") Long userId);
 }
