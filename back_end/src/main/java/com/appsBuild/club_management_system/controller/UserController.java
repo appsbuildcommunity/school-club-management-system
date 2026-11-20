@@ -39,6 +39,7 @@ public class UserController {
   }
 
   @PatchMapping("/me")
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<UserResponse> updateCurrentUser(
       @Valid @RequestBody UpdateProfileRequest request) {
     return ResponseEntity.ok(userService.updateCurrentUserProfile(request));

@@ -7,6 +7,7 @@ import com.appsBuild.club_management_system.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ public class AuthTokenController {
   private final JwtService jwtService;
 
   @PostMapping("/refresh")
+  @PreAuthorize("permitAll()")
   public ResponseEntity<TokenResponse> refresh(
       @Valid @RequestBody RefreshTokenRequest request) {
     RefreshTokenService.RefreshResult result = refreshTokenService.rotate(request.refreshToken());
@@ -31,6 +33,7 @@ public class AuthTokenController {
   }
 
   @PostMapping("/logout")
+  @PreAuthorize("permitAll()")
   public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
     refreshTokenService.revoke(request.refreshToken());
     return ResponseEntity.noContent().build();

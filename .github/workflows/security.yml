@@ -105,8 +105,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # fails if a custom rule stops matching its test cases (e.g. after an annotation rename)
+      - name: Test the custom rules
+        run: semgrep --test --config .semgrep/spring-authorization.yml .semgrep/spring-authorization.java
+      # .semgrep/ is excluded because its test file contains unprotected endpoints on purpose
       - name: Scan and report all findings
-        run: semgrep scan --metrics=off --config p/java --config .semgrep/ --sarif --output semgrep.sarif
+        run: semgrep scan --metrics=off --config p/java --config .semgrep/ --exclude .semgrep --sarif --output semgrep.sarif
       - name: Upload SARIF
         # fork pull requests get a read-only token and cannot upload
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
@@ -115,7 +119,7 @@ jobs:
           sarif_file: semgrep.sarif
           category: semgrep
       - name: Fail on ERROR findings
-        run: semgrep scan --metrics=off --config p/java --config .semgrep/ --severity ERROR --error
+        run: semgrep scan --metrics=off --config p/java --config .semgrep/ --exclude .semgrep --severity ERROR --error
 
   dependency-review:
     name: Dependency review
